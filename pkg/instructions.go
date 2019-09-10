@@ -332,6 +332,23 @@ func init() {
 	instr(cli, 0x58, 1, 2, modeImplied)
 
 	instr(clv, 0xB8, 1, 2, modeImplied)
+
+	instr(cmp, 0xC9, 2, 2, modeImmediate)
+	instr(cmp, 0xC5, 2, 3, modeZeroPage)
+	instr(cmp, 0xD5, 2, 4, modeZeroPageX)
+	instr(cmp, 0xCD, 3, 4, modeAbsolute)
+	instr(cmp, 0xDD, 3, 4, modeAbsoluteX)
+	instr(cmp, 0xD9, 3, 4, modeAbsoluteY)
+	instr(cmp, 0xC1, 2, 6, modeIndexedIndirect)
+	instr(cmp, 0xD1, 2, 5, modeIndirectIndexed)
+
+	instr(cpx, 0xE0, 2, 2, modeImmediate)
+	instr(cpx, 0xE4, 2, 3, modeZeroPage)
+	instr(cpx, 0xEC, 3, 4, modeAbsolute)
+
+	instr(cpy, 0xC0, 2, 2, modeImmediate)
+	instr(cpy, 0xC4, 2, 3, modeZeroPage)
+	instr(cpy, 0xCC, 3, 4, modeAbsolute)
 }
 
 func adc(pos position, ctx context) {
@@ -425,6 +442,27 @@ func cli(_ position, ctx context) {
 
 func clv(_ position, ctx context) {
 	ctx.flags.V = false
+}
+
+func compare(val byte, pos *position, ctx context) {
+	ctx.setZNFlags(val - pos.read())
+	if val > pos.read() {
+		ctx.flags.C = 1
+	} else {
+		ctx.flags.C = 0
+	}
+}
+
+func cmp(pos position, ctx context) {
+	compare(ctx.regs.A, &pos, ctx)
+}
+
+func cpx(pos position, ctx context) {
+	compare(ctx.regs.X, &pos, ctx)
+}
+
+func cpy(pos position, ctx context) {
+	compare(ctx.regs.Y, &pos, ctx)
 }
 
 func php(_ position, ctx context) {
