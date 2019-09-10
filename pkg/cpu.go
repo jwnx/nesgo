@@ -57,3 +57,12 @@ func (f Flags) unpack(val byte) {
 	f.V = val&(1<<6) != 0
 	f.N = val&(1<<7) != 0
 }
+
+// Reference: https://wiki.nesdev.com/w/index.php/CPU_memory_map
+
+// Interrupt vectors
+const (
+	NmiVector   = Address(0xFFFA)
+	ResetVector = Address(0xFFFC)
+	IrqVector   = Address(0xFFFE)
+)
