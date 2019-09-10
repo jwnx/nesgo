@@ -319,6 +319,8 @@ func init() {
 
 	instr(bpl, 0x10, 2, 2, modeRelative)
 
+	instr(brk, 0x00, 1, 7, modeImplied)
+
 	instr(bvc, 0x50, 2, 2, modeRelative)
 
 	instr(bvs, 0x70, 2, 2, modeRelative)
@@ -386,6 +388,13 @@ func bpl(pos position, ctx context) {
 	branchOn(!ctx.flags.N, &pos, ctx.regs)
 }
 
+func brk(pos position, ctx context) {
+	ctx.pushAddress(ctx.regs.PC)
+	php(pos, ctx)
+	sei(pos, ctx)
+	ctx.regs.PC = IrqVector
+}
+
 func bvc(pos position, ctx context) {
 	branchOn(!ctx.flags.V, &pos, ctx.regs)
 }
@@ -394,3 +403,11 @@ func bvs(pos position, ctx context) {
 	branchOn(ctx.flags.V, &pos, ctx.regs)
 }
 
+func php(_ position, ctx context) {
+	// https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
+	ctx.push(ctx.flags.pack() | 0x30)
+}
+
+func sei(_ position, ctx context) {
+	ctx.flags.I = true
+}
