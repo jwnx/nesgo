@@ -1,5 +1,11 @@
 package nesgo
 
+import (
+	"fmt"
+	"os"
+	"text/tabwriter"
+)
+
 func isNegative(reg byte) bool {
 	return (reg & 0x80) != 0
 }
@@ -124,4 +130,38 @@ func (mode AddressingMode) String() string {
 	default:
 		return "" // Unreachable
 	}
+}
+
+// RunFunc executes the instruction and returns the effective cycles.
+// The PC should point to after the instruction's opcode.
+type RunFunc = func(Memory, *Flags, *Registers) byte
+
+// Instruction contains information about a particular instruction,
+// and knows how to execute itself.
+type Instruction struct {
+	Name   string
+	OpCode byte
+	Size   byte
+	Cycles byte
+	Mode   AddressingMode
+	Run    RunFunc
+}
+
+// Instructions contains all the valid CPU instructions, indexed
+// by their opcode.
+var Instructions = [256]Instruction{}
+
+//PrintInstructions displays the supported instructions.
+func PrintInstructions() {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	fmt.Fprintln(w, "assembler\topcode\tbytes\tcycles\t")
+	fmt.Fprintln(w, "-------------\t------\t-----\t------\t")
+	for _, inst := range Instructions {
+		if inst.Name == "" {
+			continue
+		}
+		fmt.Fprintf(w, "%s %s\t0x%02X\t%d\t%d\t\n",
+			inst.Name, inst.Mode, inst.OpCode, inst.Size, inst.Cycles)
+	}
+	w.Flush()
 }
