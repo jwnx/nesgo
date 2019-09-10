@@ -2,6 +2,7 @@ package nesgo
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"reflect"
 	"runtime"
@@ -279,4 +280,25 @@ func instr(
 
 func init() {
 	// <name> <opcode> <bytes> <cycles> <addressing mode>
+	instr(adc, 0x69, 2, 2, modeImmediate)
+	instr(adc, 0x65, 2, 3, modeZeroPage)
+	instr(adc, 0x75, 2, 4, modeZeroPageX)
+	instr(adc, 0x6D, 3, 4, modeAbsolute)
+	instr(adc, 0x7D, 3, 4, modeAbsoluteX)
+	instr(adc, 0x79, 3, 4, modeAbsoluteY)
+	instr(adc, 0x61, 2, 6, modeIndexedIndirect)
+	instr(adc, 0x71, 2, 5, modeIndirectIndexed)
+}
+
+func adc(pos position, ctx context) {
+	curA := ctx.regs.A
+	res := int(curA) + int(pos.read()) + int(ctx.flags.C)
+	ctx.regs.A = byte(res)
+	ctx.setZNFlags(ctx.regs.A)
+	ctx.flags.V = sameSign(curA, pos.read()) && !sameSign(curA, ctx.regs.A)
+	if res > math.MaxUint8 {
+		ctx.flags.C = 1
+	} else {
+		ctx.flags.C = 0
+	}
 }
