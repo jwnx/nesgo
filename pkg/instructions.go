@@ -324,6 +324,14 @@ func init() {
 	instr(bvc, 0x50, 2, 2, modeRelative)
 
 	instr(bvs, 0x70, 2, 2, modeRelative)
+
+	instr(clc, 0x18, 1, 2, modeImplied)
+
+	instr(cld, 0xD8, 1, 2, modeImplied)
+
+	instr(cli, 0x58, 1, 2, modeImplied)
+
+	instr(clv, 0xB8, 1, 2, modeImplied)
 }
 
 func adc(pos position, ctx context) {
@@ -401,6 +409,22 @@ func bvc(pos position, ctx context) {
 
 func bvs(pos position, ctx context) {
 	branchOn(ctx.flags.V, &pos, ctx.regs)
+}
+
+func clc(_ position, ctx context) {
+	ctx.flags.C = 0
+}
+
+func cld(_ position, ctx context) {
+	ctx.flags.D = false
+}
+
+func cli(_ position, ctx context) {
+	ctx.flags.I = false
+}
+
+func clv(_ position, ctx context) {
+	ctx.flags.V = false
 }
 
 func php(_ position, ctx context) {
