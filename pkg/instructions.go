@@ -303,6 +303,22 @@ func init() {
 	instr(asl, 0x16, 2, 6, modeZeroPageX)
 	instr(asl, 0x0E, 3, 6, modeAbsolute)
 	instr(asl, 0x1E, 3, 7, modeAbsoluteX)
+
+	instr(bcc, 0x90, 2, 2, modeRelative)
+
+	instr(bcs, 0xB0, 2, 2, modeRelative)
+
+	instr(beq, 0xF0, 2, 2, modeRelative)
+
+	instr(bmi, 0x30, 2, 2, modeRelative)
+
+	instr(bne, 0xD0, 2, 2, modeRelative)
+
+	instr(bpl, 0x10, 2, 2, modeRelative)
+
+	instr(bvc, 0x50, 2, 2, modeRelative)
+
+	instr(bvs, 0x70, 2, 2, modeRelative)
 }
 
 func adc(pos position, ctx context) {
@@ -328,5 +344,43 @@ func asl(pos position, ctx context) {
 	res := pos.read() << 1
 	pos.write(res)
 	ctx.setZNFlags(res)
+}
+
+func branchOn(cond bool, pos *position, regs *Registers) {
+	if cond {
+		regs.PC = pos.address()
+	}
+}
+
+func bcc(pos position, ctx context) {
+	branchOn(ctx.flags.C == 0, &pos, ctx.regs)
+}
+
+func bcs(pos position, ctx context) {
+	branchOn(ctx.flags.C == 1, &pos, ctx.regs)
+}
+
+func beq(pos position, ctx context) {
+	branchOn(ctx.flags.Z, &pos, ctx.regs)
+}
+
+func bmi(pos position, ctx context) {
+	branchOn(ctx.flags.N, &pos, ctx.regs)
+}
+
+func bne(pos position, ctx context) {
+	branchOn(!ctx.flags.Z, &pos, ctx.regs)
+}
+
+func bpl(pos position, ctx context) {
+	branchOn(!ctx.flags.N, &pos, ctx.regs)
+}
+
+func bvc(pos position, ctx context) {
+	branchOn(!ctx.flags.V, &pos, ctx.regs)
+}
+
+func bvs(pos position, ctx context) {
+	branchOn(ctx.flags.V, &pos, ctx.regs)
 }
 
