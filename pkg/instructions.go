@@ -310,6 +310,9 @@ func init() {
 
 	instr(beq, 0xF0, 2, 2, modeRelative)
 
+	instr(bit, 0x24, 2, 3, modeZeroPage)
+	instr(bit, 0x2C, 3, 4, modeAbsolute)
+
 	instr(bmi, 0x30, 2, 2, modeRelative)
 
 	instr(bne, 0xD0, 2, 2, modeRelative)
@@ -362,6 +365,13 @@ func bcs(pos position, ctx context) {
 
 func beq(pos position, ctx context) {
 	branchOn(ctx.flags.Z, &pos, ctx.regs)
+}
+
+func bit(pos position, ctx context) {
+	val := pos.read()
+	ctx.flags.V = val&(1<<6) != 0
+	ctx.flags.N = val&(1<<7) != 0
+	ctx.flags.Z = val&ctx.regs.A == 0
 }
 
 func bmi(pos position, ctx context) {
