@@ -165,3 +165,37 @@ func PrintInstructions() {
 	}
 	w.Flush()
 }
+
+type position struct {
+	mode AddressingMode
+	addr Address
+	val  byte
+	regs *Registers
+	mem  Memory
+}
+
+func newPosition(mode AddressingMode, addr Address, regs *Registers, mem Memory) position {
+	var val byte
+	if mode == modeAccumulator {
+		val = regs.A
+	} else if addr != 0 {
+		val = mem.Read(addr)
+	}
+	return position{mode, addr, val, regs, mem}
+}
+
+func (moa *position) address() Address {
+	return moa.addr
+}
+
+func (moa *position) read() byte {
+	return moa.val
+}
+
+func (moa *position) write(val byte) {
+	if moa.mode == modeAccumulator {
+		moa.regs.A = val
+	} else {
+		moa.mem.Write(moa.addr, val)
+	}
+}
