@@ -297,6 +297,12 @@ func init() {
 	instr(and, 0x39, 3, 4, modeAbsoluteY)
 	instr(and, 0x21, 2, 6, modeIndexedIndirect)
 	instr(and, 0x31, 2, 5, modeIndirectIndexed)
+
+	instr(asl, 0x0A, 1, 2, modeAccumulator)
+	instr(asl, 0x06, 2, 5, modeZeroPage)
+	instr(asl, 0x16, 2, 6, modeZeroPageX)
+	instr(asl, 0x0E, 3, 6, modeAbsolute)
+	instr(asl, 0x1E, 3, 7, modeAbsoluteX)
 }
 
 func adc(pos position, ctx context) {
@@ -315,5 +321,12 @@ func adc(pos position, ctx context) {
 func and(pos position, ctx context) {
 	ctx.regs.A &= pos.read()
 	ctx.setZNFlags(ctx.regs.A)
+}
+
+func asl(pos position, ctx context) {
+	ctx.flags.C = (pos.read() >> 7) & 1
+	res := pos.read() << 1
+	pos.write(res)
+	ctx.setZNFlags(res)
 }
 
