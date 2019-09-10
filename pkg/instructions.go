@@ -3,6 +3,9 @@ package nesgo
 import (
 	"fmt"
 	"os"
+	"reflect"
+	"runtime"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -238,4 +241,42 @@ func (ctx context) popAddress() Address {
 func (ctx context) setZNFlags(val byte) {
 	ctx.flags.Z = val == 0
 	ctx.flags.N = isNegative(val)
+}
+
+func nameOfFunc(f runWithCtxFunc) string {
+	funcName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+	components := strings.Split(funcName, ".")
+	return components[len(components)-1]
+}
+
+func instr(
+	runWithCtx runWithCtxFunc,
+	opcode byte,
+	size byte,
+	cycles byte,
+	mode AddressingMode) {
+	Instructions[opcode] = Instruction{
+		nameOfFunc(runWithCtx), opcode, size, cycles, mode,
+		func(mem Memory, flags *Flags, regs *Registers) byte {
+			addr, pageCrossed := mode.resolve(mem, regs)
+			regs.PC += Address(size - 1)
+			curPC := regs.PC
+			runWithCtx(newPosition(mode, addr, regs, mem), context{mem, flags, regs})
+			actualCycles := cycles
+			if pageCrossed {
+				actualCycles++
+			}
+			if mode == modeRelative && curPC != regs.PC {
+				actualCycles++
+				if differentPages(curPC, regs.PC) {
+					actualCycles++
+				}
+			}
+			return actualCycles
+		},
+	}
+}
+
+func init() {
+	// <name> <opcode> <bytes> <cycles> <addressing mode>
 }
