@@ -199,3 +199,43 @@ func (moa *position) write(val byte) {
 		moa.mem.Write(moa.addr, val)
 	}
 }
+
+func sameSign(a byte, b byte) bool {
+	return a^b&0x80 == 0
+}
+
+type context struct {
+	mem   Memory
+	flags *Flags
+	regs  *Registers
+}
+
+type runWithCtxFunc = func(position, context)
+
+// The stack is a 256-byte array whose location is hardcoded at page
+// $01 ($0100-$01FF), using the SP register for a stack pointer.
+func (ctx context) push(val byte) {
+	ctx.mem.Write(Address(0x100|uint16(ctx.regs.SP)), val)
+	ctx.regs.SP--
+}
+
+func (ctx context) pop() byte {
+	ctx.regs.SP++
+	return ctx.mem.Read(Address(0x100 | uint16(ctx.regs.SP)))
+}
+
+func (ctx context) pushAddress(addr Address) {
+	ctx.push(byte(addr >> 8))
+	ctx.push(byte(addr & 0xFF))
+}
+
+func (ctx context) popAddress() Address {
+	lo := uint16(ctx.pop())
+	hi := uint16(ctx.pop())
+	return Address(hi<<8 | lo)
+}
+
+func (ctx context) setZNFlags(val byte) {
+	ctx.flags.Z = val == 0
+	ctx.flags.N = isNegative(val)
+}
