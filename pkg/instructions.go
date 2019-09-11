@@ -358,6 +358,15 @@ func init() {
 	instr(dex, 0xCA, 1, 2, modeImplied)
 
 	instr(dey, 0x88, 1, 2, modeImplied)
+
+	instr(eor, 0x49, 2, 2, modeImmediate)
+	instr(eor, 0x45, 2, 3, modeZeroPage)
+	instr(eor, 0x55, 2, 4, modeZeroPageX)
+	instr(eor, 0x4D, 3, 4, modeAbsolute)
+	instr(eor, 0x5D, 3, 4, modeAbsoluteX)
+	instr(eor, 0x59, 3, 4, modeAbsoluteY)
+	instr(eor, 0x41, 2, 6, modeIndirectIndexed)
+	instr(eor, 0x51, 2, 5, modeIndexedIndirect)
 }
 
 func adc(pos position, ctx context) {
@@ -488,6 +497,11 @@ func dex(_ position, ctx context) {
 func dey(_ position, ctx context) {
 	ctx.regs.Y--
 	ctx.setZNFlags(ctx.regs.Y)
+}
+
+func eor(pos position, ctx context) {
+	ctx.regs.A ^= pos.read()
+	ctx.setZNFlags(ctx.regs.A)
 }
 
 func php(_ position, ctx context) {
