@@ -420,6 +420,14 @@ func init() {
 	instr(ora, 0x01, 2, 6, modeIndirectIndexed)
 	instr(ora, 0x11, 2, 5, modeIndexedIndirect)
 
+	instr(pha, 0x48, 1, 3, modeImplied)
+
+	instr(php, 0x08, 1, 3, modeImplied)
+
+	instr(pla, 0x68, 1, 4, modeImplied)
+
+	instr(plp, 0x28, 1, 4, modeImplied)
+
 	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
@@ -614,9 +622,22 @@ func ora(pos position, ctx context) {
 	ctx.setZNFlags(ctx.regs.A)
 }
 
+func pha(_ position, ctx context) {
+	ctx.push(ctx.regs.A)
+}
+
 func php(_ position, ctx context) {
 	// https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
 	ctx.push(ctx.flags.pack() | 0x30)
+}
+
+func pla(_ position, ctx context) {
+	ctx.regs.A = ctx.pop()
+	ctx.setZNFlags(ctx.regs.A)
+}
+
+func plp(_ position, ctx context) {
+	ctx.flags.unpack(ctx.pop())
 }
 
 func rts(_ position, ctx context) {
