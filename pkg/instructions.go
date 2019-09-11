@@ -376,6 +376,9 @@ func init() {
 	instr(inx, 0xE8, 1, 2, modeImplied)
 
 	instr(iny, 0xC8, 1, 2, modeImplied)
+
+	instr(jmp, 0x4C, 3, 3, modeAbsolute)
+	instr(jmp, 0x6C, 3, 5, modeIndirect)
 }
 
 func adc(pos position, ctx context) {
@@ -527,6 +530,10 @@ func inx(_ position, ctx context) {
 func iny(_ position, ctx context) {
 	ctx.regs.Y++
 	ctx.setZNFlags(ctx.regs.Y)
+}
+
+func jmp(pos position, ctx context) {
+	ctx.regs.PC = pos.address()
 }
 
 func php(_ position, ctx context) {
