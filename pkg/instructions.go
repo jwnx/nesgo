@@ -409,6 +409,8 @@ func init() {
 	instr(lsr, 0x4E, 3, 6, modeAbsolute)
 	instr(lsr, 0x5E, 3, 7, modeAbsoluteX)
 
+	instr(nop, 0xEA, 1, 2, modeImplied)
+
 	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
@@ -593,6 +595,9 @@ func lsr(pos position, ctx context) {
 	res >>= 1
 	ctx.setZNFlags(res)
 	pos.write(res)
+}
+
+func nop(_ position, _ context) {
 }
 
 func php(_ position, ctx context) {
