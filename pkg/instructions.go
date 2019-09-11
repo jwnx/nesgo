@@ -382,6 +382,27 @@ func init() {
 
 	instr(jsr, 0x20, 3, 6, modeAbsolute)
 
+	instr(lda, 0xA9, 2, 2, modeImmediate)
+	instr(lda, 0xA5, 2, 2, modeZeroPage)
+	instr(lda, 0xB5, 2, 4, modeZeroPageX)
+	instr(lda, 0xAD, 3, 4, modeAbsolute)
+	instr(lda, 0xBD, 3, 4, modeAbsoluteX)
+	instr(lda, 0xB9, 3, 4, modeAbsoluteY)
+	instr(lda, 0xA1, 2, 6, modeIndirectIndexed)
+	instr(lda, 0xB1, 2, 5, modeIndexedIndirect)
+
+	instr(ldx, 0xA2, 2, 2, modeImmediate)
+	instr(ldx, 0xA6, 2, 3, modeZeroPage)
+	instr(ldx, 0xB6, 2, 4, modeZeroPageY)
+	instr(ldx, 0xAE, 3, 4, modeAbsolute)
+	instr(ldx, 0xBE, 3, 4, modeAbsoluteY)
+
+	instr(ldy, 0xA0, 2, 2, modeImmediate)
+	instr(ldy, 0xA4, 2, 3, modeZeroPage)
+	instr(ldy, 0xB4, 2, 4, modeZeroPageX)
+	instr(ldy, 0xAC, 3, 4, modeAbsolute)
+	instr(ldy, 0xBC, 3, 4, modeAbsoluteX)
+
 	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
@@ -543,6 +564,21 @@ func jmp(pos position, ctx context) {
 func jsr(pos position, ctx context) {
 	ctx.pushAddress(ctx.regs.PC - 1)
 	jmp(pos, ctx)
+}
+
+func lda(pos position, ctx context) {
+	ctx.regs.A = pos.read()
+	ctx.setZNFlags(ctx.regs.A)
+}
+
+func ldx(pos position, ctx context) {
+	ctx.regs.X = pos.read()
+	ctx.setZNFlags(ctx.regs.X)
+}
+
+func ldy(pos position, ctx context) {
+	ctx.regs.Y = pos.read()
+	ctx.setZNFlags(ctx.regs.Y)
 }
 
 func php(_ position, ctx context) {
