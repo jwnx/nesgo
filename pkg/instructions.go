@@ -349,6 +349,15 @@ func init() {
 	instr(cpy, 0xC0, 2, 2, modeImmediate)
 	instr(cpy, 0xC4, 2, 3, modeZeroPage)
 	instr(cpy, 0xCC, 3, 4, modeAbsolute)
+
+	instr(dec, 0xC6, 2, 5, modeZeroPage)
+	instr(dec, 0xD6, 2, 6, modeZeroPageX)
+	instr(dec, 0xCE, 3, 3, modeAbsolute)
+	instr(dec, 0xDE, 3, 7, modeAbsoluteX)
+
+	instr(dex, 0xCA, 1, 2, modeImplied)
+
+	instr(dey, 0x88, 1, 2, modeImplied)
 }
 
 func adc(pos position, ctx context) {
@@ -463,6 +472,22 @@ func cpx(pos position, ctx context) {
 
 func cpy(pos position, ctx context) {
 	compare(ctx.regs.Y, &pos, ctx)
+}
+
+func dec(pos position, ctx context) {
+	res := pos.read() - 1
+	ctx.setZNFlags(res)
+	pos.write(res)
+}
+
+func dex(_ position, ctx context) {
+	ctx.regs.X--
+	ctx.setZNFlags(ctx.regs.X)
+}
+
+func dey(_ position, ctx context) {
+	ctx.regs.Y--
+	ctx.setZNFlags(ctx.regs.Y)
 }
 
 func php(_ position, ctx context) {
