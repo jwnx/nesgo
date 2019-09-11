@@ -411,6 +411,15 @@ func init() {
 
 	instr(nop, 0xEA, 1, 2, modeImplied)
 
+	instr(ora, 0x09, 2, 2, modeImmediate)
+	instr(ora, 0x05, 2, 3, modeZeroPage)
+	instr(ora, 0x15, 2, 4, modeZeroPageX)
+	instr(ora, 0x0D, 3, 4, modeAbsolute)
+	instr(ora, 0x1D, 3, 4, modeAbsoluteX)
+	instr(ora, 0x19, 3, 4, modeAbsoluteY)
+	instr(ora, 0x01, 2, 6, modeIndirectIndexed)
+	instr(ora, 0x11, 2, 5, modeIndexedIndirect)
+
 	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
@@ -598,6 +607,11 @@ func lsr(pos position, ctx context) {
 }
 
 func nop(_ position, _ context) {
+}
+
+func ora(pos position, ctx context) {
+	ctx.regs.A |= pos.read()
+	ctx.setZNFlags(ctx.regs.A)
 }
 
 func php(_ position, ctx context) {
