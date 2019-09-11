@@ -379,6 +379,10 @@ func init() {
 
 	instr(jmp, 0x4C, 3, 3, modeAbsolute)
 	instr(jmp, 0x6C, 3, 5, modeIndirect)
+
+	instr(jsr, 0x20, 3, 6, modeAbsolute)
+
+	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
 func adc(pos position, ctx context) {
@@ -536,9 +540,18 @@ func jmp(pos position, ctx context) {
 	ctx.regs.PC = pos.address()
 }
 
+func jsr(pos position, ctx context) {
+	ctx.pushAddress(ctx.regs.PC - 1)
+	jmp(pos, ctx)
+}
+
 func php(_ position, ctx context) {
 	// https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
 	ctx.push(ctx.flags.pack() | 0x30)
+}
+
+func rts(_ position, ctx context) {
+	ctx.regs.PC = ctx.popAddress() + 1
 }
 
 func sei(_ position, ctx context) {
