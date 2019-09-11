@@ -403,6 +403,12 @@ func init() {
 	instr(ldy, 0xAC, 3, 4, modeAbsolute)
 	instr(ldy, 0xBC, 3, 4, modeAbsoluteX)
 
+	instr(lsr, 0x4A, 1, 2, modeAccumulator)
+	instr(lsr, 0x46, 2, 5, modeZeroPage)
+	instr(lsr, 0x56, 2, 6, modeZeroPageX)
+	instr(lsr, 0x4E, 3, 6, modeAbsolute)
+	instr(lsr, 0x5E, 3, 7, modeAbsoluteX)
+
 	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
@@ -579,6 +585,14 @@ func ldx(pos position, ctx context) {
 func ldy(pos position, ctx context) {
 	ctx.regs.Y = pos.read()
 	ctx.setZNFlags(ctx.regs.Y)
+}
+
+func lsr(pos position, ctx context) {
+	res := pos.read()
+	ctx.flags.C = res & 1
+	res >>= 1
+	ctx.setZNFlags(res)
+	pos.write(res)
 }
 
 func php(_ position, ctx context) {
