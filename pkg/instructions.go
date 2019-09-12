@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"sort"
 	"strings"
 	"text/tabwriter"
 )
@@ -155,12 +156,31 @@ type Instruction struct {
 // by their opcode.
 var Instructions = [256]Instruction{}
 
+type byName []Instruction
+
+func (is byName) Len() int {
+	return len(is)
+}
+
+func (is byName) Less(i, j int) bool {
+	if is[i].Name == is[j].Name {
+		return is[i].Mode < is[j].Mode
+	}
+	return is[i].Name < is[j].Name
+}
+
+func (is byName) Swap(i, j int) {
+	is[i], is[j] = is[j], is[i]
+}
+
 //PrintInstructions displays the supported instructions.
 func PrintInstructions() {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w, "assembler\topcode\tbytes\tcycles\t")
 	fmt.Fprintln(w, "-------------\t------\t-----\t------\t")
-	for _, inst := range Instructions {
+	insts := Instructions
+	sort.Sort(byName(insts[:]))
+	for _, inst := range insts {
 		if inst.Name == "" {
 			continue
 		}
