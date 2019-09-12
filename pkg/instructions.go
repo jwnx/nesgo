@@ -460,6 +460,8 @@ func init() {
 	instr(ror, 0x6E, 3, 6, modeAbsolute)
 	instr(ror, 0x7E, 3, 7, modeAbsoluteX)
 
+	instr(rti, 0x40, 1, 6, modeImplied)
+
 	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
@@ -686,6 +688,11 @@ func ror(pos position, ctx context) {
 	ctx.flags.C = cNew
 	ctx.setZNFlags(res)
 	pos.write(res)
+}
+
+func rti(_ position, ctx context) {
+	ctx.flags.unpack(ctx.pop())
+	ctx.regs.PC = ctx.popAddress()
 }
 
 func rts(_ position, ctx context) {
