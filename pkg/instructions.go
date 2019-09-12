@@ -463,6 +463,15 @@ func init() {
 	instr(rti, 0x40, 1, 6, modeImplied)
 
 	instr(rts, 0x60, 1, 6, modeImplied)
+
+	instr(sbc, 0xE9, 2, 2, modeImmediate)
+	instr(sbc, 0xE5, 2, 3, modeZeroPage)
+	instr(sbc, 0xF5, 2, 4, modeZeroPageX)
+	instr(sbc, 0xED, 3, 4, modeAbsolute)
+	instr(sbc, 0xFD, 3, 4, modeAbsoluteX)
+	instr(sbc, 0xF9, 3, 4, modeAbsoluteY)
+	instr(sbc, 0xE1, 2, 6, modeIndexedIndirect)
+	instr(sbc, 0xF1, 2, 5, modeIndirectIndexed)
 }
 
 func adc(pos position, ctx context) {
@@ -697,6 +706,19 @@ func rti(_ position, ctx context) {
 
 func rts(_ position, ctx context) {
 	ctx.regs.PC = ctx.popAddress() + 1
+}
+
+func sbc(pos position, ctx context) {
+	curA := ctx.regs.A
+	res := int(curA) - int(pos.read()) - int(1-ctx.flags.C)
+	ctx.regs.A = byte(res)
+	ctx.setZNFlags(ctx.regs.A)
+	ctx.flags.V = sameSign(curA, pos.read()) && !sameSign(curA, ctx.regs.A)
+	if res >= 0 {
+		ctx.flags.C = 1
+	} else {
+		ctx.flags.C = 0
+	}
 }
 
 func sei(_ position, ctx context) {
