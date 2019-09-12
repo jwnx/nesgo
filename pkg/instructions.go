@@ -448,6 +448,18 @@ func init() {
 
 	instr(plp, 0x28, 1, 4, modeImplied)
 
+	instr(rol, 0x2A, 1, 2, modeAccumulator)
+	instr(rol, 0x26, 2, 5, modeZeroPage)
+	instr(rol, 0x36, 2, 6, modeZeroPageX)
+	instr(rol, 0x2E, 3, 6, modeAbsolute)
+	instr(rol, 0x3E, 3, 7, modeAbsoluteX)
+
+	instr(ror, 0x6A, 1, 2, modeAccumulator)
+	instr(ror, 0x66, 2, 5, modeZeroPage)
+	instr(ror, 0x76, 2, 6, modeZeroPageX)
+	instr(ror, 0x6E, 3, 6, modeAbsolute)
+	instr(ror, 0x7E, 3, 7, modeAbsoluteX)
+
 	instr(rts, 0x60, 1, 6, modeImplied)
 }
 
@@ -658,6 +670,22 @@ func pla(_ position, ctx context) {
 
 func plp(_ position, ctx context) {
 	ctx.flags.unpack(ctx.pop())
+}
+
+func rol(pos position, ctx context) {
+	cNew := pos.read() >> 7
+	res := pos.read()<<1 | ctx.flags.C
+	ctx.flags.C = cNew
+	ctx.setZNFlags(res)
+	pos.write(res)
+}
+
+func ror(pos position, ctx context) {
+	cNew := pos.read() & 1
+	res := pos.read()>>1 | ctx.flags.C<<7
+	ctx.flags.C = cNew
+	ctx.setZNFlags(res)
+	pos.write(res)
 }
 
 func rts(_ position, ctx context) {
