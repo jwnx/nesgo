@@ -472,6 +472,12 @@ func init() {
 	instr(sbc, 0xF9, 3, 4, modeAbsoluteY)
 	instr(sbc, 0xE1, 2, 6, modeIndexedIndirect)
 	instr(sbc, 0xF1, 2, 5, modeIndirectIndexed)
+
+	instr(sec, 0x38, 1, 2, modeImplied)
+
+	instr(sed, 0xF8, 1, 2, modeImplied)
+
+	instr(sei, 0x78, 1, 2, modeImplied)
 }
 
 func adc(pos position, ctx context) {
@@ -719,6 +725,14 @@ func sbc(pos position, ctx context) {
 	} else {
 		ctx.flags.C = 0
 	}
+}
+
+func sec(_ position, ctx context) {
+	ctx.flags.C = 1
+}
+
+func sed(_ position, ctx context) {
+	ctx.flags.D = true
 }
 
 func sei(_ position, ctx context) {
