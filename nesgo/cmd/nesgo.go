@@ -16,8 +16,8 @@ func main() {
 		return
 	}
 
-	if prg, _, err := nesgo.LoadiNESFile(romPath); err == nil {
-		cpu := nesgo.NewCPU(prg)
+	if ines, err := nesgo.LoadiNESFile(romPath); err == nil {
+		cpu := nesgo.NewCPU(ines.PRG)
 		cpu.Reset()
 
 		for {

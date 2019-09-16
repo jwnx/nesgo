@@ -10,6 +10,21 @@ import (
 
 // Reference: https://wiki.nesdev.com/w/index.php/INES
 
+// Mirroring mode:
+// 0 = Horizontal mirroring (vertical arrangment)
+// 1 = Vertical mirroring (horizontal arrangment)
+type Mirroring byte
+
+// Horizontal returns true for horizontal mirroring.
+func (m Mirroring) Horizontal() bool {
+	return m == 0
+}
+
+// Vertical returns true for vertical mirroring.
+func (m Mirroring) Vertical() bool {
+	return m == 1
+}
+
 // PRG ROM data
 type PRG struct {
 	data  []byte
@@ -40,37 +55,47 @@ type iNESHeader struct {
 
 const mapperMask = 0xf0
 
+// LoadResult of loading an iNES file, containing
+// the PRG, CHR and mirroring mode.
+type LoadResult struct {
+	PRG  *PRG
+	CHR  CHR
+	Mode Mirroring
+}
+
 // LoadiNESFile reads an iNES file, returning the PRG and CHR sections on success.
-func LoadiNESFile(path *string) (*PRG, CHR, error) {
+func LoadiNESFile(path *string) (*LoadResult, error) {
 	file, err := os.Open(*path)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer file.Close()
 
 	header := iNESHeader{}
 	if err := binary.Read(file, binary.LittleEndian, &header); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	//log.Printf("Loaded header for %s: %+v", *path, header)
 
 	if header.Magic != magic {
-		return nil, nil, errors.New("Invalid .nes file: missing magic number\n")
+		return nil, errors.New("Invalid .nes file: missing magic number")
 	}
 
 	if (header.Flags1|header.Flags2)&mapperMask != 0 {
-		return nil, nil, errors.New("Wrong mapper type: only NROM is supported\n")
+		return nil, errors.New("Wrong mapper type: only NROM is supported")
 	}
+
+	mode := Mirroring(header.Flags1 & 1)
 
 	prg := &PRG{make([]byte, int(header.SizePRG)*16*1024), header.SizePRG}
 	if _, err := io.ReadFull(file, prg.data); err != nil {
-		return nil, nil, fmt.Errorf("Unable to read PRG: %s\n", err)
+		return nil, fmt.Errorf("Unable to read PRG: %s", err)
 	}
 
 	chr := make(CHR, int(header.SizeCHR)*8*1024)
 	if _, err := io.ReadFull(file, chr); err != nil {
-		//	log.Printf("Unable to read CHR: %s\n", err)
+		return nil, fmt.Errorf("Unable to read CHR: %s", err)
 	}
 
 	if header.SizeCHR == 0 {
@@ -78,7 +103,5 @@ func LoadiNESFile(path *string) (*PRG, CHR, error) {
 		chr = make(CHR, 8*1024)
 	}
 
-	//log.Printf("Successfully loaded ROM %s", *path)
-
-	return prg, chr, nil
+	return &LoadResult{prg, chr, mode}, nil
 }
