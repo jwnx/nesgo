@@ -504,6 +504,8 @@ func init() {
 	instr(txa, 0x8A, 1, 2, modeImplied)
 
 	instr(txs, 0x9A, 1, 2, modeImplied)
+
+	instr(tya, 0x98, 1, 2, modeImplied)
 }
 
 func adc(pos position, ctx context) {
@@ -796,4 +798,9 @@ func txa(_ position, ctx context) {
 
 func txs(_ position, ctx context) {
 	ctx.regs.SP = ctx.regs.X
+}
+
+func tya(pos position, ctx context) {
+	ctx.regs.A = ctx.regs.Y
+	ctx.setZNFlags(ctx.regs.A)
 }
