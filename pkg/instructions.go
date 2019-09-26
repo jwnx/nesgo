@@ -486,6 +486,10 @@ func init() {
 	instr(sta, 0x99, 3, 5, modeAbsoluteY)
 	instr(sta, 0x81, 2, 6, modeIndexedIndirect)
 	instr(sta, 0x91, 2, 6, modeIndirectIndexed)
+
+	instr(stx, 0x86, 2, 3, modeZeroPage)
+	instr(stx, 0x96, 2, 4, modeZeroPageY)
+	instr(stx, 0x8E, 3, 4, modeAbsolute)
 }
 
 func adc(pos position, ctx context) {
@@ -749,4 +753,8 @@ func sei(_ position, ctx context) {
 
 func sta(pos position, ctx context) {
 	pos.write(ctx.regs.A)
+}
+
+func stx(pos position, ctx context) {
+	pos.write(ctx.regs.X)
 }
