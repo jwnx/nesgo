@@ -478,6 +478,14 @@ func init() {
 	instr(sed, 0xF8, 1, 2, modeImplied)
 
 	instr(sei, 0x78, 1, 2, modeImplied)
+
+	instr(sta, 0x85, 2, 3, modeZeroPage)
+	instr(sta, 0x95, 2, 4, modeZeroPageX)
+	instr(sta, 0x8D, 3, 4, modeAbsolute)
+	instr(sta, 0x9D, 3, 5, modeAbsoluteX)
+	instr(sta, 0x99, 3, 5, modeAbsoluteY)
+	instr(sta, 0x81, 2, 6, modeIndexedIndirect)
+	instr(sta, 0x91, 2, 6, modeIndirectIndexed)
 }
 
 func adc(pos position, ctx context) {
@@ -737,4 +745,8 @@ func sed(_ position, ctx context) {
 
 func sei(_ position, ctx context) {
 	ctx.flags.I = true
+}
+
+func sta(pos position, ctx context) {
+	pos.write(ctx.regs.A)
 }
