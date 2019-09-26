@@ -498,6 +498,8 @@ func init() {
 	instr(tax, 0xAA, 1, 2, modeImplied)
 
 	instr(tay, 0xA8, 1, 2, modeImplied)
+
+	instr(tsx, 0xBA, 1, 2, modeImplied)
 }
 
 func adc(pos position, ctx context) {
@@ -777,4 +779,8 @@ func tax(_ position, ctx context) {
 
 func tay(_ position, ctx context) {
 	ctx.regs.Y = ctx.regs.A
+}
+
+func tsx(_ position, ctx context) {
+	ctx.regs.X = ctx.regs.SP
 }
