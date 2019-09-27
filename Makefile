@@ -16,7 +16,7 @@ test: asm
 	./asm6f/asm6f ./tests/and.s ./tests/and.nes
 	./asm6f/asm6f ./tests/brk.s ./tests/brk.nes
 
-	mkdir ./tmp
+	mkdir -p ./tmp
 
 	./build/nesgo -rom ./tests/adc.nes > ./tmp/adc.out
 	./build/nesgo -rom ./tests/and.nes > ./tmp/and.out
