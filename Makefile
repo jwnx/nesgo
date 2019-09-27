@@ -1,5 +1,12 @@
 .PHONY: all clean
 
+TST=./tst
+BIN=./bin
+RES=./res
+LOG=./log
+
+TESTS=$(addprefix ${BIN}/, $(notdir $(patsubst %.s,%,$(sort $(wildcard ${TST}/*.s)))))
+
 all: asm tooly nesgo
 
 asm:
@@ -10,22 +17,40 @@ tooly: asm
 	cd TOOLY && $(MAKE) all
 
 nesgo:
-	go build -o build/nesgo cmd/nesgo.go
+	go build -o ./nesgo/build/nesgo ./nesgo/cmd/nesgo.go
 
-test: asm
-	./asm6f/asm6f ./tests/adc.s ./tests/adc.nes
-	./asm6f/asm6f ./tests/and.s ./tests/and.nes
-	./asm6f/asm6f ./tests/brk.s ./tests/brk.nes
+${BIN}/%: ${TST}/%.s
+	./asm6f/asm6f $^ $@
 
-	mkdir -p ./tmp
+${BIN}:
+	@mkdir -p ${BIN}
 
-	./build/nesgo -rom ./tests/adc.nes > ./tmp/adc.out
-	./build/nesgo -rom ./tests/and.nes > ./tmp/and.out
-	./build/nesgo -rom ./tests/brk.nes > ./tmp/brk.out
+${LOG}:
+	@mkdir -p ${LOG}
 
-	diff ./tmp/adc.out ./res/adc
-	diff ./tmp/and.out ./res/and
-	diff ./tmp/brk.out ./res/brk
+test: asm nesgo ${BIN} ${LOG} ${TESTS}
+	@{  echo "************************* Tests ******************************"; \
+		test_failed=0; \
+		test_passed=0; \
+		for test in ${TESTS}; do \
+			result="${LOG}/$$(basename $$test).log"; \
+			expected="${RES}/$$(basename $$test).r"; \
+			printf "Running $$test: "; \
+			./nesgo/build/nesgo -rom $$test > $$result 2>&1; \
+			errors=`diff -y --suppress-common-lines $$expected $$result | grep '^' | wc -l`; \
+			if [ "$$errors" -eq 0 ]; then \
+				printf "\033[0;32mPASSED\033[0m\n"; \
+				test_passed=$$((test_passed+1)); \
+			else \
+				printf "\033[0;31mFAILED [$$errors errors]\033[0m\n"; \
+				test_failed=$$((test_failed+1)); \
+			fi; \
+		done; \
+		echo "*********************** Summary ******************************"; \
+		echo "- $$test_passed tests passed"; \
+		echo "- $$test_failed tests failed"; \
+		echo "**************************************************************"; \
+	}
 
 clean:
 	cd asm6f && $(MAKE) clean
