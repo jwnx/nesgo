@@ -12,7 +12,17 @@ import (
 // Reference: https://wiki.nesdev.com/w/index.php/INES
 
 // PRG ROM data
-type PRG = []byte
+type PRG struct {
+	data  []byte
+	banks byte
+}
+
+func (prg *PRG) Read(addr Address) byte {
+	offset := Address(addr % 0x4000)            // FFFC - 4000 = 3FFC (BFFC = C000 - 3)
+	base := ((addr - 0x8000) / 0x4000) * 0x4000 //
+	index := (Address(prg.banks-1) * base) + offset
+	return prg.data[index]
+}
 
 // CHR ROM or RAM data
 type CHR = []byte
@@ -31,7 +41,7 @@ type iNESHeader struct {
 const mapperMask = 0xf0
 
 // LoadiNESFile reads an iNES file, returning the PRG and CHR sections on success.
-func LoadiNESFile(path *string) (PRG, CHR, error) {
+func LoadiNESFile(path *string) (*PRG, CHR, error) {
 	file, err := os.Open(*path)
 	if err != nil {
 		return nil, nil, err
@@ -53,9 +63,9 @@ func LoadiNESFile(path *string) (PRG, CHR, error) {
 		return nil, nil, errors.New("Wrong mapper type: only NROM is supported")
 	}
 
-	prg := make(PRG, int(header.SizePRG)*16*1024)
-	if _, err := io.ReadFull(file, prg); err != nil {
-		return nil, nil, fmt.Errorf("Unable to read PRG: %s", err)
+	prg := &PRG{make([]byte, int(header.SizePRG)*16*1024), header.SizePRG}
+	if _, err := io.ReadFull(file, prg.data); err != nil {
+		return nil, nil, fmt.Errorf("Unable to read PRG: %s\n", err)
 	}
 
 	chr := make(CHR, int(header.SizeCHR)*8*1024)

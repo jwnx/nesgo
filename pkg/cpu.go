@@ -1,7 +1,5 @@
 package nesgo
 
-import "log"
-
 // Registers contains all of the CPU registers
 type Registers struct {
 	PC Address // Program counter
@@ -70,18 +68,19 @@ const (
 )
 
 type cpuMemory struct {
-	rom PRG
+	rom *PRG
 	ram []byte
 }
 
 func (mem *cpuMemory) Read(addr Address) byte {
 	switch {
 	case addr < 0x2000:
-		return mem.ram[addr%0x0800] // [0x0800, 0x1FFF] are mirrors of [0x0000, 0x07FF]
-	case addr >= 0x6000:
-		return mem.rom[addr]
+		return mem.ram[addr%0x8000]
+	case addr < 0x8000:
+		return 0
+	case addr >= 0x8000:
+		return mem.rom.Read(addr)
 	default:
-		log.Fatalf("CPU memory read out-of-bounds at %s", addr)
 		return 0 // Unreachable
 	}
 }
@@ -90,10 +89,10 @@ func (mem *cpuMemory) Write(addr Address, value byte) {
 	switch {
 	case addr < 0x2000:
 		mem.ram[addr%0x0800] = value
-	case addr >= 0x6000:
-		mem.rom[addr] = value
+	case addr < 0x8000:
+	case addr >= 0x8000:
+		mem.rom.data[addr] = value
 	default:
-		log.Fatalf("CPU memory write out-of-bounds at %s", addr)
 	}
 }
 
@@ -105,8 +104,11 @@ type CPU struct {
 }
 
 // NewCPU returns a new CPU instance
-func NewCPU(rom PRG) *CPU {
-	cpu := CPU{cpuMemory: cpuMemory{rom, make([]byte, 2048)}}
+func NewCPU(rom *PRG) *CPU {
+	cpu := CPU{cpuMemory: cpuMemory{
+		rom: rom,
+		ram: make([]byte, 2048),
+	}}
 	return &cpu
 }
 
