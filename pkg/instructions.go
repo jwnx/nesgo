@@ -283,6 +283,14 @@ func instr(
 			regs.PC += Address(size - 1)
 			curPC := regs.PC
 			runWithCtx(newPosition(mode, addr, regs, mem), context{mem, flags, regs})
+			fmt.Printf("| pc = %#04x | a = %#02x | x = %#02x | y = %#02x | sp = %#02x | p[NV-BDIZC] = %08b |", uint16(regs.PC), regs.A, regs.X, regs.Y, regs.SP, flags.pack())
+
+			if addr != 0 {
+				fmt.Printf(" MEM[%#04x] = %#02x |\n", uint16(addr), mem.Read(addr))
+			} else {
+				fmt.Printf("\n")
+			}
+
 			actualCycles := cycles
 			if pageCrossed {
 				actualCycles++
