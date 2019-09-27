@@ -3,6 +3,7 @@
 all: asm tooly nesgo
 
 asm:
+	git submodule update --init --recursive
 	cd asm6f && $(MAKE) all
 
 tooly: asm
