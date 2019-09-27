@@ -1,6 +1,23 @@
 # NESGO: A Go NES Emulator
 
+Requires `go`!
+
+
+Building:
+```
+git submodule update --init --recursive
+make
+
+```
+
+
 Usage:
+
+```
+./build/nesgo -instructions       # to print all CPU instructions available
+./build/nesgo -rom path_to_file   # to specify which rom to load
+./build/nesgo 			  # to load TOOLY's rom
+```
   
 
 ## TOOLY
