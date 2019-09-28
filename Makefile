@@ -1,4 +1,4 @@
-.PHONY: all clean
+.PHONY: all clean nesgo
 
 TST=./tst
 BIN=./bin
@@ -17,7 +17,7 @@ tooly: asm
 	cd TOOLY && $(MAKE) all
 
 nesgo:
-	go build -o ./nesgo/build/nesgo ./nesgo/cmd/nesgo.go
+	cd nesgo && go build -o ./build/nesgo ./cmd/nesgo.go
 
 ${BIN}/%: ${TST}/%.s
 	./asm6f/asm6f $^ $@
@@ -55,5 +55,6 @@ test: asm nesgo ${BIN} ${LOG} ${TESTS}
 clean:
 	cd asm6f && $(MAKE) clean
 	cd TOOLY && $(MAKE) clean
-	rm -rf build
-	rm -rf tmp
+	rm -rf ./nesgo/build
+	rm -rf ${LOG}/*
+	rm -rf ${BIN}/*
