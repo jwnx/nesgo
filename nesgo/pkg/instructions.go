@@ -206,7 +206,7 @@ func newPosition(mode AddressingMode, addr Address, regs *Registers, mem Memory)
 	var val byte
 	if mode == modeAccumulator {
 		val = regs.A
-	} else if addr != 0 {
+	} else if mode != modeImplied {
 		val = mem.Read(addr)
 	}
 	return position{mode, addr, val, regs, mem}
