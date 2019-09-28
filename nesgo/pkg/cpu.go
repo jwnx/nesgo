@@ -75,7 +75,7 @@ type cpuMemory struct {
 func (mem *cpuMemory) Read(addr Address) byte {
 	switch {
 	case addr < 0x2000:
-		return mem.ram[addr%0x8000]
+		return mem.ram[addr%0x0800]
 	case addr < 0x8000:
 		return 0
 	case addr >= 0x8000:
