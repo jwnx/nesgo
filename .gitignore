@@ -1,3 +1,5 @@
 *.nes
 build/
 tmp/*
+log/*
+bin/*
