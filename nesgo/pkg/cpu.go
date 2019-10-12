@@ -112,6 +112,7 @@ func NewCPU(rom *PRG) *CPU {
 	return &cpu
 }
 
+// Step advances the instruction stream
 func (cpu *CPU) Step() (bool, error) {
 	opcode := cpu.Read(cpu.PC)
 	cpu.PC++
@@ -125,6 +126,7 @@ func (cpu *CPU) Step() (bool, error) {
 	return false, nil
 }
 
+// Reset prepares the initial CPU state
 func (cpu *CPU) Reset() error {
 	cpu.PC = ReadAddress(cpu, ResetVector)
 	cpu.SP = 0xFD
