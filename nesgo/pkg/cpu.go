@@ -109,6 +109,7 @@ func NewCPU(rom *PRG) *CPU {
 		rom: rom,
 		ram: make([]byte, 2048),
 	}}
+	cpu.Reset()
 	return &cpu
 }
 
