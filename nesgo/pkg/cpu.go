@@ -114,13 +114,18 @@ func NewCPU(rom *PRG) *CPU {
 	return &cpu
 }
 
-// Step advances the instruction stream
-func (cpu *CPU) Step() Cycles {
-	opcode := cpu.Read(cpu.PC)
-	cpu.PC++
+func (cpu *CPU) run(opcode byte) {
 	inst := Instructions[opcode]
 	cpu.Cycles += inst.Run(&cpu.cpuMemory, &cpu.Flags, &cpu.Registers)
-	return cpu.Cycles
+}
+
+// Step advances the instruction stream
+func (cpu *CPU) Step() Cycles {
+	cycles := cpu.Cycles
+	opcode := cpu.Read(cpu.PC)
+	cpu.PC++
+	cpu.run(opcode)
+	return cpu.Cycles - cycles
 }
 
 // Reset prepares the initial CPU state
