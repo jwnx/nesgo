@@ -143,7 +143,7 @@ func (mode AddressingMode) String() string {
 
 // RunFunc executes the instruction and returns the effective cycles.
 // The PC should point to after the instruction's opcode.
-type RunFunc = func(Memory, *Flags, *Registers) byte
+type RunFunc = func(Memory, *Flags, *Registers) Cycles
 
 // Instruction contains information about a particular instruction,
 // and knows how to execute itself.
@@ -151,7 +151,7 @@ type Instruction struct {
 	Name   string
 	OpCode byte
 	Size   byte
-	Cycles byte
+	Cycles Cycles
 	Mode   AddressingMode
 	Run    RunFunc
 }
@@ -278,11 +278,11 @@ func instr(
 	runWithCtx runWithCtxFunc,
 	opcode byte,
 	size byte,
-	cycles byte,
+	cycles Cycles,
 	mode AddressingMode) {
 	Instructions[opcode] = Instruction{
 		nameOfFunc(runWithCtx), opcode, size, cycles, mode,
-		func(mem Memory, flags *Flags, regs *Registers) byte {
+		func(mem Memory, flags *Flags, regs *Registers) Cycles {
 			addr, pageCrossed := mode.resolve(mem, regs)
 			regs.PC += Address(size - 1)
 			curPC := regs.PC

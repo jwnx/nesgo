@@ -101,6 +101,7 @@ type CPU struct {
 	Registers
 	Flags
 	cpuMemory
+	Cycles    Cycles
 }
 
 // NewCPU returns a new CPU instance
@@ -118,7 +119,7 @@ func (cpu *CPU) Step() (bool, error) {
 	opcode := cpu.Read(cpu.PC)
 	cpu.PC++
 	inst := Instructions[opcode]
-	inst.Run(&cpu.cpuMemory, &cpu.Flags, &cpu.Registers)
+	cpu.Cycles += inst.Run(&cpu.cpuMemory, &cpu.Flags, &cpu.Registers)
 
 	if opcode == 0 {
 		return true, nil
