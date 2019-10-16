@@ -160,6 +160,9 @@ type Instruction struct {
 // by their opcode.
 var Instructions = [256]Instruction{}
 
+// BRK contains the opcode of the interrupt-triggering instruction, BRK
+const BRK = 0x00
+
 type byName []Instruction
 
 func (is byName) Len() int {

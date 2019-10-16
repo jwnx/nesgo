@@ -102,16 +102,42 @@ type CPU struct {
 	Flags
 	cpuMemory
 	Cycles    Cycles
+	interrupt func()
 }
 
 // NewCPU returns a new CPU instance
 func NewCPU(rom *PRG) *CPU {
-	cpu := CPU{cpuMemory: cpuMemory{
-		rom: rom,
-		ram: make([]byte, 2048),
-	}}
+	cpu := CPU{
+		cpuMemory: cpuMemory{
+			rom: rom,
+			ram: make([]byte, 2048),
+		},
+		interrupt: func() {},
+	}
 	cpu.Reset()
 	return &cpu
+}
+
+func (cpu *CPU) trigger(vector Address) {
+	cpu.interrupt = func() {
+		cpu.run(BRK)
+		if vector != IrqVector {
+			cpu.PC = ReadAddress(&cpu.cpuMemory, vector)
+		}
+		cpu.interrupt = func() {}
+	}
+}
+
+// NMI triggers a non-maskable interrupt on the next cycle
+func (cpu *CPU) NMI() {
+	cpu.trigger(NmiVector)
+}
+
+// IRQ triggers an interrupt on the next cycle
+func (cpu *CPU) IRQ() {
+	if !cpu.I {
+		cpu.trigger(IrqVector)
+	}
 }
 
 func (cpu *CPU) run(opcode byte) {
@@ -122,6 +148,7 @@ func (cpu *CPU) run(opcode byte) {
 // Step advances the instruction stream
 func (cpu *CPU) Step() Cycles {
 	cycles := cpu.Cycles
+	cpu.interrupt()
 	opcode := cpu.Read(cpu.PC)
 	cpu.PC++
 	cpu.run(opcode)
