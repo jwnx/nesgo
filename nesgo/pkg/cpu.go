@@ -127,10 +127,8 @@ func (cpu *CPU) Step() (bool, error) {
 }
 
 // Reset prepares the initial CPU state
-func (cpu *CPU) Reset() error {
+func (cpu *CPU) Reset() {
 	cpu.PC = ReadAddress(cpu, ResetVector)
 	cpu.SP = 0xFD
 	cpu.Flags.unpack(0x24)
-
-	return nil
 }
