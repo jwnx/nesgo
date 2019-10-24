@@ -68,8 +68,10 @@ const (
 )
 
 type cpuMemory struct {
-	rom *PRG
-	ram []byte
+	rom        *PRG
+	ram        []byte
+	cycles     *Cycles
+	stall      *Cycles
 }
 
 func (mem *cpuMemory) Read(addr Address) byte {
@@ -96,23 +98,30 @@ func (mem *cpuMemory) Write(addr Address, value byte) {
 	}
 }
 
+// CPUState contains CPU state that needs to be accessed externally
+type CPUState struct {
+	Cycles Cycles
+	Stall  Cycles
+}
+
 // CPU contains the state to emulate the CPU unit
 type CPU struct {
 	Registers
 	Flags
 	cpuMemory
 	Cycles    Cycles
+	Stall     Cycles
 	interrupt func()
 }
 
 // NewCPU returns a new CPU instance
 func NewCPU(rom *PRG) *CPU {
-	cpu := CPU{
-		cpuMemory: cpuMemory{
-			rom: rom,
-			ram: make([]byte, 2048),
-		},
-		interrupt: func() {},
+	cpu := CPU{interrupt: func() {}}
+	cpu.cpuMemory = cpuMemory{
+		rom:        rom,
+		ram:        make([]byte, 2048),
+		cycles:     &cpu.Cycles,
+		stall:      &cpu.Stall,
 	}
 	cpu.Reset()
 	return &cpu
@@ -147,6 +156,10 @@ func (cpu *CPU) run(opcode byte) {
 
 // Step advances the instruction stream
 func (cpu *CPU) Step() Cycles {
+	if cpu.Stall > 0 {
+		cpu.Stall--
+		return 1
+	}
 	cycles := cpu.Cycles
 	cpu.interrupt()
 	opcode := cpu.Read(cpu.PC)
