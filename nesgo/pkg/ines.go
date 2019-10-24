@@ -64,8 +64,8 @@ type Cartridge struct {
 }
 
 // LoadiNESFile reads an iNES file, returning the PRG and CHR sections on success.
-func LoadiNESFile(path *string) (*Cartridge, error) {
-	file, err := os.Open(*path)
+func LoadiNESFile(path string) (*Cartridge, error) {
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
