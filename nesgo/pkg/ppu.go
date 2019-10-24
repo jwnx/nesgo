@@ -349,3 +349,38 @@ func (status *ppustatus) read(lastRegisterWrite byte, internal *internalRegister
 	return res
 }
 
+// VRAM read/write data register.
+// After access, the video memory address will increment
+// by an amount determined by bit 2 of ppuctrl.
+type ppudata struct {
+	buffer byte
+}
+
+func (data *ppudata) read(mem *ppuMemory, ctrl *ppuctrl, internal *internalRegisters) byte {
+	value := mem.Read(Address(internal.v))
+	if internal.v < 0x3F00 {
+		// When reading while the VRAM address is in the range 0-$3EFF
+		// (i.e., before the palettes), the read will return the contents
+		// of an internal read buffer. This internal buffer is updated only
+		// when reading PPUDATA, and so is preserved across frames. After
+		// the CPU reads and gets the contents of the internal buffer, the
+		// PPU will immediately update the internal buffer with the byte at
+		// the current VRAM address.
+		data.buffer, value = value, data.buffer
+	} else {
+		// Reading palette data from $3F00-$3FFF works differently. The
+		// palette data is placed immediately on the data bus, and hence
+		// no dummy read is required. Reading the palettes still updates
+		// the internal buffer though, but the data placed in it is the
+		// mirrored nametable data that would appear instead of the palette.
+		data.buffer = mem.Read(Address(internal.v - 0x1000))
+	}
+	internal.incrementV(ctrl.increment == 0)
+	return value
+}
+
+func (data *ppudata) write(mem *ppuMemory, ctrl *ppuctrl, internal *internalRegisters, value byte) {
+	mem.Write(Address(internal.v), value)
+	internal.incrementV(ctrl.increment == 0)
+}
+
