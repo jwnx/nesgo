@@ -549,3 +549,27 @@ func (ppu *PPU) fetchCycle() bool {
 	return ppu.visibleCycle() || (ppu.Cycle >= 321 && ppu.Cycle <= 336)
 }
 
+func (ppu *PPU) advanceFrame() {
+	ppu.ScanLine = 0
+	ppu.Frame++
+	ppu.f ^= 1
+}
+
+func (ppu *PPU) tick(cpu *CPU) {
+	if ppu.renderingEnabled() {
+		if ppu.f == 1 && ppu.ScanLine == 261 && ppu.Cycle == 339 {
+			ppu.Cycle = 0
+			ppu.advanceFrame()
+			return
+		}
+	}
+	ppu.Cycle++
+	if ppu.Cycle > 340 {
+		ppu.Cycle = 0
+		ppu.ScanLine++
+		if ppu.ScanLine > 261 {
+			ppu.advanceFrame()
+		}
+	}
+}
+
