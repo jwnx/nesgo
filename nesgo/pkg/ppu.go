@@ -271,3 +271,39 @@ func (ctrl *ppuctrl) spriteHeight() uint {
 	return 16
 }
 
+// 7  bit
+// ---- ----
+// BGRs bMmG
+// |||| ||||
+// |||| |||+- Greyscale (0: normal color, 1: produce a greyscale display)
+// |||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
+// |||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
+// |||| +---- 1: Show background
+// |||+------ 1: Show sprites
+// ||+------- Emphasize red
+// |+-------- Emphasize green
+// +--------- Emphasize blue
+type ppumask struct {
+	greyscale          byte
+	showLeftBackground bool
+	showLeftSprites    bool
+	showBackground     bool
+	showSprites        bool
+	emphasizeRed       bool
+	emphasizeGreen     bool
+	emphasizeBlue      bool
+}
+
+func (mask *ppumask) write(value byte) {
+	*mask = ppumask{
+		greyscale:          (value >> 0) & 1,
+		showLeftBackground: ((value >> 1) & 1) == 1,
+		showLeftSprites:    ((value >> 2) & 1) == 1,
+		showBackground:     ((value >> 3) & 1) == 1,
+		showSprites:        ((value >> 4) & 1) == 1,
+		emphasizeRed:       ((value >> 5) & 1) == 1,
+		emphasizeGreen:     ((value >> 6) & 1) == 1,
+		emphasizeBlue:      ((value >> 7) & 1) == 1,
+	}
+}
+
