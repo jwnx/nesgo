@@ -210,7 +210,7 @@ LoadBackgroundLoop:
   LDA #%10010000        ; Enable NMI, sprites from Pattern Table 0, background from Pattern Table 1
   STA PPUCTRL
 
-  LDA #%00011110        ; Enable sprites, enable background, no clipping on left side
+  LDA #%00011000        ; Enable sprites, enable background, clipping on left side
   STA PPUMASK
 
 Forever:
@@ -226,7 +226,7 @@ NMI:
   ; This is the PPU clean up section, so rendering the next frame starts properly.
   LDA #%10000000        ; Enable NMI, background and sprites from Pattern Table 0
   STA PPUCTRL
-  LDA #%00011110        ; Enable sprites, enable background, no clipping on left side
+  LDA #%00011000        ; Enable sprites, enable background, clipping on left side
   STA PPUMASK
   LDA #$00              ; Tell the ppu there is no background scrolling
   STA PPUSCROLL
