@@ -198,21 +198,16 @@ func PrintInstructions() {
 }
 
 type position struct {
-	mode AddressingMode
-	addr Address
-	val  byte
-	regs *Registers
-	mem  Memory
+	mode   AddressingMode
+	addr   Address
+	regs   *Registers
+	mem    Memory
+	val    byte
+	loaded bool
 }
 
 func newPosition(mode AddressingMode, addr Address, regs *Registers, mem Memory) position {
-	var val byte
-	if mode == modeAccumulator {
-		val = regs.A
-	} else if mode != modeImplied {
-		val = mem.Read(addr)
-	}
-	return position{mode, addr, val, regs, mem}
+	return position{mode, addr, regs, mem, 0, false}
 }
 
 func (moa *position) address() Address {
@@ -220,6 +215,15 @@ func (moa *position) address() Address {
 }
 
 func (moa *position) read() byte {
+	if moa.loaded {
+		return moa.val
+	}
+	if moa.mode == modeAccumulator {
+		moa.val = moa.regs.A
+	} else if moa.mode != modeImplied {
+		moa.val = moa.mem.Read(moa.addr)
+	}
+	moa.loaded = true
 	return moa.val
 }
 
