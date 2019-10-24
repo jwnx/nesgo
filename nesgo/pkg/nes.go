@@ -20,3 +20,9 @@ func NewNES(cartridge *Cartridge) *NES {
 func (nes *NES) Reset() {
 	nes.CPU.Reset()
 }
+
+// Step advances the console by a CPU instruction
+func (nes *NES) Step() Cycles {
+	cpuCycles := nes.CPU.Step()
+	return cpuCycles
+}
