@@ -384,3 +384,72 @@ func (data *ppudata) write(mem *ppuMemory, ctrl *ppuctrl, internal *internalRegi
 	internal.incrementV(ctrl.increment == 0)
 }
 
+// PPURegisters contains PPU registers that are mapped to the
+// CPU's address space.
+type PPURegisters struct {
+	internalRegisters
+	ctrl       ppuctrl
+	mask       ppumask
+	status     ppustatus
+	data       ppudata
+	oamAddress byte
+	oam        [256]byte
+	lastWrite  byte
+	ppuMemory
+}
+
+func (regs *PPURegisters) reset() {
+	regs.ctrl.write(0, &regs.internalRegisters)
+	regs.mask.write(0)
+	regs.oamAddress = 0
+}
+
+// OAM DMA is connected to the CPU. Writing $XX will upload 256
+// bytes of data from CPU page $XX00-$XXFF to the internal OAM.
+func (regs *PPURegisters) writeDMA(cpu Memory, onStall func(Cycles), value byte) {
+	addr := Address(value) << 8
+	for i := 0; i < 256; i++ {
+		regs.oam[regs.oamAddress] = cpu.Read(addr)
+		regs.oamAddress++
+		addr++
+	}
+	onStall(513)
+}
+
+// Write `value` at `addr`
+func (regs *PPURegisters) Write(cpu Memory, onStall func(Cycles), addr Address, value byte) {
+	regs.lastWrite = value
+	switch addr {
+	case 0x2000:
+		regs.ctrl.write(value, &regs.internalRegisters)
+	case 0x2001:
+		regs.mask.write(value)
+	case 0x2003:
+		regs.oamAddress = value
+	case 0x2004:
+		regs.oam[regs.oamAddress] = value
+		regs.oamAddress++
+	case 0x2005:
+		regs.writeScroll(value)
+	case 0x2006:
+		regs.writeAddr(value)
+	case 0x2007:
+		regs.data.write(&regs.ppuMemory, &regs.ctrl, &regs.internalRegisters, value)
+	case 0x4014:
+		regs.writeDMA(cpu, onStall, value)
+	}
+}
+
+// Read the byte at `addr`
+func (regs *PPURegisters) Read(addr Address) byte {
+	switch addr {
+	case 0x2002:
+		return regs.status.read(regs.lastWrite, &regs.internalRegisters)
+	case 0x2004:
+		return regs.oam[regs.oamAddress]
+	case 0x2007:
+		return regs.data.read(&regs.ppuMemory, &regs.ctrl, &regs.internalRegisters)
+	}
+	return 0
+}
+
