@@ -99,3 +99,122 @@ func (mem *ppuMemory) Write(addr Address, value byte) {
 	}
 }
 
+// References:
+//   https://wiki.nesdev.com/w/index.php/PPU_registers
+//   https://wiki.nesdev.com/w/index.php/PPU_frame_timing
+// The 15 bit registers t and v are composed this way during rendering:
+//
+// yyy NN YYYYY XXXXX
+// ||| || ||||| +++++-- coarse X scroll
+// ||| || +++++-------- coarse Y scroll
+// ||| ++-------------- nametable select
+// +++----------------- fine Y scroll
+type internalRegisters struct {
+	// Current VRAM address (15 bits), set by PPUADDR.
+	v uint16
+	// Temporary VRAM address (15 bits); can also be thought of
+	// as the address of the top left onscreen tile.
+	t uint16
+	// Fine X scroll (3 bits)
+	x byte
+	// First or second write toggle (1 bit)
+	w byte
+	// Even/odd flag that is toggled every frame
+	f byte
+}
+
+// The scroll register is used to change the scroll position, that is,
+// to tell the PPU which pixel of the nametable selected through
+// PPUCTRL should be at the top left corner of the rendered screen.
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_scrolling
+func (internal *internalRegisters) writeScroll(value byte) {
+	if internal.w == 0 {
+		// First write to the register sets the X position
+		// t: ........ ...HGFED = d: HGFED...
+		// x:               CBA = d: .....CBA
+		// w:                   = 1
+		internal.t = (internal.t & 0xFFE0) | (uint16(value) >> 3)
+		internal.x = value & 0x07
+		internal.w = 1
+	} else {
+		// Second write sets the Y position
+		// t: .CBA..HG FED..... = d: HGFEDCBA
+		// w:                   = 0
+		internal.t = (internal.t & 0x8FFF) | ((uint16(value) & 0x07) << 12)
+		internal.t = (internal.t & 0xFC1F) | ((uint16(value) & 0xF8) << 2)
+		internal.w = 0
+	}
+}
+
+// Because the CPU and the PPU are on separate buses, neither
+// has direct access to the other's memory. The CPU writes to
+// VRAM through a pair of registers on the PPU. First it loads
+// an address into PPUADDR, and then it writes repeatedly to
+// PPUDATA to fill VRAM.
+func (internal *internalRegisters) writeAddr(value byte) {
+	if internal.w == 0 {
+		// t: ..FEDCBA ........ = d: ..FEDCBA
+		// t: .X...... ........ = 0
+		// w:                   = 1
+		internal.t = (internal.t & 0x80FF) | ((uint16(value) & 0x3F) << 8)
+		internal.w = 1
+	} else {
+		// t: ........ HGFEDCBA = d: HGFEDCBA
+		// v                    = t
+		// w:                   = 0
+		internal.t = (internal.t & 0xFF00) | uint16(value)
+		internal.v = internal.t
+		internal.w = 0
+	}
+}
+
+func (internal *internalRegisters) incrementV(across bool) {
+	if across {
+		internal.v++
+	} else { // down
+		internal.v += 32
+	}
+}
+
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Coarse_X_increment
+func (internal *internalRegisters) incrementX() {
+	if internal.v&0x1F == 0x1F { // if coarse X == 31
+		internal.v &= 0xFFE0 // coarse X = 0
+		internal.v ^= 0x0400 // switch horizontal nametable
+	} else {
+		internal.v++ // increment coarse X
+	}
+}
+
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Y_increment
+func (internal *internalRegisters) incrementY() {
+	// Fine Y indexes inside a tile, and coard Y selects the tile
+	if internal.v&0x7000 != 0x7000 { // if fine Y < 7
+		internal.v += 0x1000 // increment fine Y
+	} else {
+		internal.v &= 0x8FFF            // fine Y = 0
+		y := (internal.v & 0x03E0) >> 5 // let y = coarse Y
+		if y == 29 {
+			y = 0                // coarse Y = 0
+			internal.v ^= 0x0800 // switch vertical nametable
+		} else if y == 31 {
+			y = 0 // coarse Y = 0, nametable not switched
+		} else {
+			y++ // increment coarse Y
+		}
+		internal.v = (internal.v & 0xFC1F) | (y << 5) // put coarse Y back into v
+	}
+}
+
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_scrolling#At_dot_257_of_each_scanline
+func (internal *internalRegisters) copyX() {
+	// v: .....F.. ...EDCBA = t: .....F.. ...EDCBA
+	internal.v = (internal.v & 0xFBE0) | (internal.t & 0x041F)
+}
+
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_scrolling#During_dots_280_to_304_of_the_pre-render_scanline_.28end_of_vblank.29
+func (internal *internalRegisters) copyY() {
+	// v: .IHGF.ED CBA..... = t: .IHGF.ED CBA.....
+	internal.v = (internal.v & 0x841F) | (internal.t & 0x7BE0)
+}
+
