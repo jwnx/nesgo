@@ -629,11 +629,11 @@ sprites:
   .db $00, $22, $00, $00   ; sprite 3
 
     ; vert tile attr horiz ; Clock
-  .db $C8, $f0, $00, $E9   ; Seconds 1
-  .db $C8, $f0, $00, $E1   ; Seconds 2
-  .db $C8, $fa, $00, $D9   ; :
-  .db $C8, $f0, $00, $D1   ; Minutes 1
-  .db $C8, $f0, $00, $C9   ; Minutes 2
+  .db $C7, $f0, $00, $E9   ; Seconds 1
+  .db $C7, $f0, $00, $E1   ; Seconds 2
+  .db $C7, $fa, $00, $D9   ; :
+  .db $C7, $f0, $00, $D1   ; Minutes 1
+  .db $C7, $f0, $00, $C9   ; Minutes 2
 
     ; vert tile attr horiz ; Health
   .db $CF, $e5, $02, $28
@@ -644,8 +644,8 @@ sprites:
   .db $CF, $e5, $02, $50
   .db $CF, $e5, $02, $58
   .db $CF, $e5, $02, $60
-  .db $CF, $e5, $02, $68
-  .db $CF, $e5, $02, $70
+  .db $CF, $e5, $02, $58
+  .db $CF, $e5, $02, $60
 
   .db $D7, $e5, $02, $28
   .db $D7, $e5, $02, $30
@@ -655,8 +655,8 @@ sprites:
   .db $D7, $e5, $02, $50
   .db $D7, $e5, $02, $58
   .db $D7, $e5, $02, $60
-  .db $D7, $e5, $02, $68
-  .db $D7, $e5, $02, $70
+  .db $D7, $e5, $02, $58
+  .db $D7, $e5, $02, $60
 
 background:
   .db $0e,$3c,$2d,$28,$29,$3a,$a4,$2b,$0b,$2d,$2d,$1d,$28,$29,$3a,$08
