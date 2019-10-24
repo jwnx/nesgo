@@ -453,3 +453,37 @@ func (regs *PPURegisters) Read(addr Address) byte {
 	return 0
 }
 
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_OAM
+
+type rawSprite struct {
+	y     byte
+	tile  byte
+	attrs byte
+	x     byte
+}
+
+func newRawSprite(regs *PPURegisters, index uint) rawSprite {
+	return rawSprite{
+		y:     regs.oam[index*4+0],
+		tile:  regs.oam[index*4+1],
+		attrs: regs.oam[index*4+2],
+		x:     regs.oam[index*4+3],
+	}
+}
+
+func (s rawSprite) shouldFlipHorizontally() bool {
+	return s.attrs&0x40 == 0x40
+}
+
+func (s rawSprite) shouldFlipVertically() bool {
+	return s.attrs&0x80 == 0x80
+}
+
+func (s rawSprite) pallete() byte {
+	return s.attrs & 0x03
+}
+
+func (s rawSprite) priority() byte {
+	return (s.attrs >> 5) & 1
+}
+
