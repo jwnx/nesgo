@@ -1,6 +1,7 @@
 package nesgo
 
 import (
+	"image"
 	"log"
 )
 
@@ -485,5 +486,66 @@ func (s rawSprite) pallete() byte {
 
 func (s rawSprite) priority() byte {
 	return (s.attrs >> 5) & 1
+}
+
+// PPU contains the state to emulate the PPU unit
+type PPU struct {
+	PPURegisters
+
+	Cycle    uint   // 0-340
+	ScanLine uint   // pre-render (261), visible (0-239), post-render (240), vblank (241-260)
+	Frame    uint64 // frame counter
+
+	background uint64 // Background shift registers
+
+	// Double buffering
+	current *image.RGBA
+	next    *image.RGBA
+}
+
+// NewPPU returns a new PPU instance
+func NewPPU(rom CHR, mode Mirroring) *PPU {
+	ppu := PPU{
+		PPURegisters: PPURegisters{
+			ppuMemory: ppuMemory{rom: rom, nameTable: nameTable{mode: mode}},
+		},
+		current: image.NewRGBA(image.Rect(0, 0, 256, 240)),
+		next:    image.NewRGBA(image.Rect(0, 0, 256, 240)),
+	}
+	ppu.Reset()
+	return &ppu
+}
+
+// Reset prepares the initial PPU state
+func (ppu *PPU) Reset() {
+	ppu.PPURegisters.reset()
+	ppu.Cycle = 340
+	ppu.ScanLine = 240
+	ppu.Frame = 0
+}
+
+// Buffer returns the current buffer with the rendered frame
+func (ppu *PPU) Buffer() *image.RGBA {
+	return ppu.current
+}
+
+func (ppu *PPU) renderingEnabled() bool {
+	return ppu.mask.showBackground || ppu.mask.showSprites
+}
+
+func (ppu *PPU) visibleLine() bool {
+	return ppu.ScanLine < 240
+}
+
+func (ppu *PPU) visibleCycle() bool {
+	return ppu.Cycle >= 1 && ppu.Cycle <= 256
+}
+
+func (ppu *PPU) preRenderLine() bool {
+	return ppu.ScanLine == 261
+}
+
+func (ppu *PPU) fetchCycle() bool {
+	return ppu.visibleCycle() || (ppu.Cycle >= 321 && ppu.Cycle <= 336)
 }
 
