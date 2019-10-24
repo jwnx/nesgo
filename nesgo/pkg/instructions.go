@@ -81,9 +81,9 @@ func (mode AddressingMode) resolve(mem Memory, regs *Registers) (Address, pagesC
 	case modeIndirect:
 		addr = ReadAddress(mem, ReadAddress(mem, regs.PC))
 	case modeIndexedIndirect:
-		addr = ReadAddress(mem, ReadAddress(mem, regs.PC)+Address(regs.X))
+		addr = ReadAddress(mem, Address(mem.Read(regs.PC)+regs.X))
 	case modeIndirectIndexed:
-		baseAddr := ReadAddress(mem, ReadAddress(mem, regs.PC))
+		baseAddr := ReadAddress(mem, Address(mem.Read(regs.PC)))
 		addr = baseAddr + Address(regs.Y)
 		crossed = differentPages(baseAddr, addr)
 	case modeRelative:
