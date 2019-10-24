@@ -55,16 +55,16 @@ type iNESHeader struct {
 
 const mapperMask = 0xf0
 
-// LoadResult of loading an iNES file, containing
+// Cartridge holds the result of loading an iNES file, containing
 // the PRG, CHR and mirroring mode.
-type LoadResult struct {
+type Cartridge struct {
 	PRG  *PRG
 	CHR  CHR
 	Mode Mirroring
 }
 
 // LoadiNESFile reads an iNES file, returning the PRG and CHR sections on success.
-func LoadiNESFile(path *string) (*LoadResult, error) {
+func LoadiNESFile(path *string) (*Cartridge, error) {
 	file, err := os.Open(*path)
 	if err != nil {
 		return nil, err
@@ -103,5 +103,5 @@ func LoadiNESFile(path *string) (*LoadResult, error) {
 		chr = make(CHR, 8*1024)
 	}
 
-	return &LoadResult{prg, chr, mode}, nil
+	return &Cartridge{prg, chr, mode}, nil
 }
