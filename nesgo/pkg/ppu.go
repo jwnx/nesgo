@@ -218,3 +218,56 @@ func (internal *internalRegisters) copyY() {
 	internal.v = (internal.v & 0x841F) | (internal.t & 0x7BE0)
 }
 
+// 7  bit  0
+// ---- ----
+// |||| ||||
+// |||| ||++- Base nametable address
+// |||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
+// |||| |+--- VRAM address increment per CPU read/write of PPUDATA
+// |||| |     (0: add 1, going across; 1: add 32, going down)
+// |||| +---- Sprite pattern table address for 8x8 sprites
+// ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
+// |||+------ Background pattern table address (0: $0000; 1: $1000)
+// ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+// |+-------- PPU master/slave select
+// |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
+// +--------- Generate an NMI at the start of the
+//            vertical blanking interval (0: off; 1: on)
+// Equivalently, bits 1 and 0 are the most significant bit of the scrolling coordinates.
+// 7  bit  0
+// ---- ----
+// .... ..YX
+// 	      ||
+//        |+- 1: Add 256 to the X scroll position
+//        +-- 1: Add 240 to the Y scroll position
+type ppuctrl struct {
+	nameTable       byte
+	increment       byte
+	spriteTable     byte
+	backgroundTable byte
+	spriteSize      byte
+	masterSlave     byte
+	generateNMI     bool
+}
+
+func (ctrl *ppuctrl) write(value byte, internal *internalRegisters) {
+	*ctrl = ppuctrl{
+		nameTable:       value & 3,
+		increment:       (value >> 2) & 1,
+		spriteTable:     (value >> 3) & 1,
+		backgroundTable: (value >> 4) & 1,
+		spriteSize:      (value >> 5) & 1,
+		masterSlave:     (value >> 6) & 1,
+		generateNMI:     ((value >> 7) & 1) == 1,
+	}
+	// t: ....BA.. ........ = d: ......BA
+	internal.t = (internal.t & 0xF3FF) | (uint16(value) & 0x03 << 10)
+}
+
+func (ctrl *ppuctrl) spriteHeight() uint {
+	if ctrl.spriteSize == 0 {
+		return 8
+	}
+	return 16
+}
+
