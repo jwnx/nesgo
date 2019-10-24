@@ -175,13 +175,14 @@ LoadBackgroundLoop:
   CPX #$04
   BNE LoadBackgroundLoop
 
-LoadAttribute:
-  LDA PPUSTATUS         ; Read PPU status to reset the high/low latch
-  setPpuAddr #$23C0
-  setPointer attribute
-  LDA #$3C
-  STA datasize
-  JSR LoadToPPU
+; Already written by the previous loop
+;LoadAttribute:
+;  LDA PPUSTATUS         ; Read PPU status to reset the high/low latch
+;  setPpuAddr #$23C0
+;  setPointer attribute
+;  LDA #$3C
+;  STA datasize
+;  JSR LoadToPPU
 
   ; Set initial positions
   LDA #$20
