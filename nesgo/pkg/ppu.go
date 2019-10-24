@@ -64,3 +64,38 @@ func (p *pallete) write(addr Address, value byte) {
 	p[p.adjust(addr)] = value
 }
 
+// Reference https://wiki.nesdev.com/w/index.php/PPU_memory_map
+
+type ppuMemory struct {
+	rom       CHR
+	nameTable nameTable
+	pallete   pallete
+}
+
+func (mem *ppuMemory) Read(addr Address) byte {
+	switch {
+	case addr < 0x2000: // The 8KB of ROM
+		return mem.rom[addr]
+	case addr < 0x3F00:
+		return mem.nameTable.read(addr)
+	case addr < 0x4000:
+		return mem.pallete.read(addr)
+	default:
+		log.Fatalf("PPU memory read out-of-bounds at %s", addr)
+		return 0 // Unreachable
+	}
+}
+
+func (mem *ppuMemory) Write(addr Address, value byte) {
+	switch {
+	case addr < 0x2000:
+		mem.rom[addr] = value
+	case addr < 0x3F00:
+		mem.nameTable.write(addr, value)
+	case addr < 0x4000:
+		mem.pallete.write(addr, value)
+	default:
+		log.Fatalf("PPU memory write out-of-bounds at %s", addr)
+	}
+}
+
