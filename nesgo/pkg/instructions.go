@@ -592,7 +592,7 @@ func brk(pos position, ctx context) {
 	ctx.pushAddress(ctx.regs.PC)
 	php(pos, ctx)
 	sei(pos, ctx)
-	ctx.regs.PC = IrqVector
+	ctx.regs.PC = ReadAddress(ctx.mem, IrqVector)
 }
 
 func bvc(pos position, ctx context) {
