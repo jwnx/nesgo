@@ -41,3 +41,26 @@ func (n *nameTable) write(addr Address, value byte) {
 	n.data[n.adjust(addr)] = value
 }
 
+// Reference https://wiki.nesdev.com/w/index.php/PPU_palettes
+
+type pallete [32]byte
+
+func (*pallete) adjust(addr Address) Address {
+	// $3F20-$3FFF are mirrors of $3F00-$3F1F
+	addr = addr % 32
+	// $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C,
+	// containing the universal background color.
+	if addr == 16 {
+		return 0
+	}
+	return addr
+}
+
+func (p *pallete) read(addr Address) byte {
+	return p[p.adjust(addr)]
+}
+
+func (p *pallete) write(addr Address, value byte) {
+	p[p.adjust(addr)] = value
+}
+
