@@ -403,8 +403,8 @@ func init() {
 	instr(eor, 0x4D, 3, 4, modeAbsolute)
 	instr(eor, 0x5D, 3, 4, modeAbsoluteX)
 	instr(eor, 0x59, 3, 4, modeAbsoluteY)
-	instr(eor, 0x41, 2, 6, modeIndirectIndexed)
-	instr(eor, 0x51, 2, 5, modeIndexedIndirect)
+	instr(eor, 0x41, 2, 6, modeIndexedIndirect)
+	instr(eor, 0x51, 2, 5, modeIndirectIndexed)
 
 	instr(inc, 0xE6, 2, 5, modeZeroPage)
 	instr(inc, 0xF6, 2, 6, modeZeroPageX)
@@ -426,8 +426,8 @@ func init() {
 	instr(lda, 0xAD, 3, 4, modeAbsolute)
 	instr(lda, 0xBD, 3, 4, modeAbsoluteX)
 	instr(lda, 0xB9, 3, 4, modeAbsoluteY)
-	instr(lda, 0xA1, 2, 6, modeIndirectIndexed)
-	instr(lda, 0xB1, 2, 5, modeIndexedIndirect)
+	instr(lda, 0xA1, 2, 6, modeIndexedIndirect)
+	instr(lda, 0xB1, 2, 5, modeIndirectIndexed)
 
 	instr(ldx, 0xA2, 2, 2, modeImmediate)
 	instr(ldx, 0xA6, 2, 3, modeZeroPage)
@@ -455,8 +455,8 @@ func init() {
 	instr(ora, 0x0D, 3, 4, modeAbsolute)
 	instr(ora, 0x1D, 3, 4, modeAbsoluteX)
 	instr(ora, 0x19, 3, 4, modeAbsoluteY)
-	instr(ora, 0x01, 2, 6, modeIndirectIndexed)
-	instr(ora, 0x11, 2, 5, modeIndexedIndirect)
+	instr(ora, 0x01, 2, 6, modeIndexedIndirect)
+	instr(ora, 0x11, 2, 5, modeIndirectIndexed)
 
 	instr(pha, 0x48, 1, 3, modeImplied)
 
