@@ -208,10 +208,10 @@ LoadBackgroundLoop:
   STA gamestate
 
   LDA #%10010000        ; Enable NMI, sprites from Pattern Table 0, background from Pattern Table 1
-  STA $2000
+  STA PPUCTRL
 
   LDA #%00011110        ; Enable sprites, enable background, no clipping on left side
-  STA $2001
+  STA PPUMASK
 
 Forever:
   JMP Forever           ; Initialization is done, loop forever
