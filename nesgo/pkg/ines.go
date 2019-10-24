@@ -32,10 +32,9 @@ type PRG struct {
 }
 
 func (prg *PRG) Read(addr Address) byte {
-	offset := Address(addr % 0x4000)            // FFFC - 4000 = 3FFC (BFFC = C000 - 3)
-	base := ((addr - 0x8000) / 0x4000) * 0x4000 //
+	offset := Address(addr % 0x4000) // FFFC - 4000 = 3FFC (BFFC = C000 - 3)
+	base := ((addr - 0x8000) / 0x4000) * 0x4000
 	index := (Address(prg.banks-1) * base) + offset
-	//	log.Printf("PRG.read(returning index %s) and data %X", index, prg.data[index])
 	return prg.data[index]
 }
 
@@ -75,8 +74,6 @@ func LoadiNESFile(path string) (*Cartridge, error) {
 	if err := binary.Read(file, binary.LittleEndian, &header); err != nil {
 		return nil, err
 	}
-
-	//log.Printf("Loaded header for %s: %+v", *path, header)
 
 	if header.Magic != magic {
 		return nil, errors.New("Invalid .nes file: missing magic number")
