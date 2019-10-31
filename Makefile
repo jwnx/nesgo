@@ -20,10 +20,10 @@ front:
 	cd nesgo/gui/frontend && npm install && npm run build
 
 gui: front
-	go run github.com/leaanthony/mewn/cmd/mewn nesgo/gui/app.go
+	export GO111MODULE=on && go run github.com/leaanthony/mewn/cmd/mewn nesgo/gui/app.go
 
 nesgo: gui
-	cd nesgo && go build -o ./build/nesgo -ldflags "-s -w -X github.com/wailsapp/wails.BuildMode=Debug" ./cmd/nesgo.go
+	export GO111MODULE=on && cd nesgo && go build -o ./build/nesgo -ldflags "-s -w -X github.com/wailsapp/wails.BuildMode=Debug" ./cmd/nesgo.go
 
 ${BIN}/%: ${TST}/%.s
 	./asm6f/asm6f $^ $@
