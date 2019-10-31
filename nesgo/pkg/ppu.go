@@ -722,3 +722,36 @@ func (ppu *PPU) maybeFetchTile() {
 	}
 }
 
+func (ppu *PPU) renderPixel() {
+	x := ppu.Cycle - 1 // Cycle 0 is not visible
+	y := ppu.ScanLine
+	backgroundColor := colorOf(uint32(ppu.background>>32), uint(ppu.x))
+	if backgroundColor%4 == 0 || !ppu.mask.showBackground ||
+		(x < 8 && !ppu.mask.showLeftBackground) {
+		backgroundColor = 0
+	}
+	sprite, spriteColor := ppu.spritePixel(x)
+	if x < 8 && !ppu.mask.showLeftSprites {
+		spriteColor = 0
+	}
+	var color byte
+	if backgroundColor == 0 && spriteColor == 0 {
+		color = 0
+	} else if backgroundColor == 0 {
+		color = spriteColor | 0x10
+	} else if spriteColor == 0 {
+		color = backgroundColor
+	} else {
+		if sprite.index == 0 && x < 255 {
+			ppu.status.spiteZeroHit = true
+		}
+		if sprite.priority == 0 {
+			color = spriteColor | 0x10
+		} else {
+			color = backgroundColor
+		}
+	}
+	c := Palette[ppu.pallete.read(Address(color))%64]
+	ppu.next.SetRGBA(int(x), int(y), c)
+}
+
