@@ -55,3 +55,8 @@ func (nes *NES) StepFrame() Cycles {
 func (nes *NES) Buffer() *image.RGBA {
 	return nes.PPU.Buffer()
 }
+
+// Press a button of the controller
+func (nes *NES) Press(btns Buttons) {
+	nes.Controller.Press(btns)
+}
