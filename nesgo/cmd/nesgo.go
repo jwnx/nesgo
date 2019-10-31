@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
+
+	"nesgo/gui"
 	nesgo "nesgo/pkg"
 )
 
@@ -16,8 +17,5 @@ func main() {
 		return
 	}
 
-	if _, err := nesgo.LoadiNESFile(*romPath); err == nil {
-	} else {
-		log.Printf("Failed to load %s: %s", *romPath, err)
-	}
+	gui.Launch(romPath)
 }

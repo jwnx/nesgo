@@ -16,8 +16,14 @@ asm:
 tooly: asm
 	cd TOOLY && $(MAKE) all
 
-nesgo:
-	cd nesgo && go build -o ./build/nesgo ./cmd/nesgo.go
+front:
+	cd nesgo/gui/frontend && npm install && npm run build
+
+gui: front
+	go run github.com/leaanthony/mewn/cmd/mewn nesgo/gui/app.go
+
+nesgo: gui
+	cd nesgo && go build -o ./build/nesgo -ldflags "-s -w -X github.com/wailsapp/wails.BuildMode=Debug" ./cmd/nesgo.go
 
 ${BIN}/%: ${TST}/%.s
 	./asm6f/asm6f $^ $@
@@ -56,5 +62,8 @@ clean:
 	cd asm6f && $(MAKE) clean
 	cd TOOLY && $(MAKE) clean
 	rm -rf ./nesgo/build
+	rm -rf ./nesgo/gui/frontend/node_modules
+	rm -rf ./nesgo/gui/frontend/build
+	rm -rf ./nesgo/gui/gui-mewn.go
 	rm -rf ${LOG}/*
 	rm -rf ${BIN}/*
