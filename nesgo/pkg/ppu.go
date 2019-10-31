@@ -102,8 +102,7 @@ func (mem *ppuMemory) Write(addr Address, value byte) {
 }
 
 // References:
-//   https://wiki.nesdev.com/w/index.php/PPU_registers
-//   https://wiki.nesdev.com/w/index.php/PPU_frame_timing
+//  https://wiki.nesdev.com/w/index.php/PPU_scrolling#PPU_internal_registers
 // The 15 bit registers t and v are composed this way during rendering:
 //
 // yyy NN YYYYY XXXXX
@@ -190,7 +189,7 @@ func (internal *internalRegisters) incrementX() {
 
 // Reference: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Y_increment
 func (internal *internalRegisters) incrementY() {
-	// Fine Y indexes inside a tile, and coard Y selects the tile
+	// Fine Y indexes inside a tile, and coarse Y selects the tile
 	if internal.v&0x7000 != 0x7000 { // if fine Y < 7
 		internal.v += 0x1000 // increment fine Y
 	} else {
@@ -331,7 +330,7 @@ func (mask *ppumask) write(value byte) {
 //            pre-render line.
 type ppustatus struct {
 	spriteOverflow bool
-	spiteZeroHit   bool
+	spriteZeroHit  bool
 	vblankStarted  bool
 }
 
@@ -340,7 +339,7 @@ func (status *ppustatus) read(lastRegisterWrite byte, internal *internalRegister
 	if status.spriteOverflow {
 		res |= 1 << 5
 	}
-	if status.spiteZeroHit {
+	if status.spriteZeroHit {
 		res |= 1 << 6
 	}
 	if status.vblankStarted {
@@ -560,7 +559,14 @@ func (ppu *PPU) advanceFrame() {
 
 func (ppu *PPU) tick(cpu *CPU) {
 	if ppu.renderingEnabled() {
-		if ppu.f == 1 && ppu.ScanLine == 261 && ppu.Cycle == 339 {
+		// This scanline varies in length, depending on whether an even or an odd frame is being
+		// rendered. For odd frames, the cycle at the end of the scanline is skipped
+		// (this is done internally by jumping directly from (339,261) to (0,0),
+		// replacing the idle tick at the beginning of the first visible scanline with
+		// the last tick of the last dummy nametable fetch). For even frames, the last
+		// cycle occurs normally.
+		if ppu.f == 1 && ppu.ScanLine == 261 && ppu.Cycle ==
+			339 {
 			ppu.Cycle = 0
 			ppu.advanceFrame()
 			return
@@ -655,6 +661,15 @@ func (ppu *PPU) loadSprites() {
 	}
 }
 
+func (ppu *PPU) maybeLoadSprites() {
+	if ppu.renderingEnabled() && ppu.Cycle == 257 {
+		// Do cycles 257-320 in one go
+		if ppu.visibleLine() {
+			ppu.loadSprites()
+		}
+	}
+}
+
 func colorOf(pattern uint32, offset uint) byte {
 	offset = 7 - offset
 	return byte((pattern >> (offset * 4)) & 0xF)
@@ -680,15 +695,6 @@ func (ppu *PPU) spritePixel(x uint) (*sprite, byte) {
 		return &sprite, color
 	}
 	return nil, 0
-}
-
-func (ppu *PPU) maybeLoadSprites() {
-	if ppu.renderingEnabled() && ppu.Cycle == 257 {
-		// Do cycles 257-320 in one go
-		if ppu.visibleLine() {
-			ppu.loadSprites()
-		}
-	}
 }
 
 // Reference: https://wiki.nesdev.com/w/index.php/PPU_rendering
@@ -743,7 +749,7 @@ func (ppu *PPU) renderPixel() {
 		color = backgroundColor
 	} else {
 		if sprite.index == 0 && x < 255 {
-			ppu.status.spiteZeroHit = true
+			ppu.status.spriteZeroHit = true
 		}
 		if sprite.priority == 0 {
 			color = spriteColor | 0x10
@@ -788,7 +794,7 @@ func (ppu *PPU) Step(cpu *CPU) {
 			ppu.current, ppu.next = ppu.next, ppu.current
 		} else if ppu.preRenderLine() {
 			ppu.status.vblankStarted = false
-			ppu.status.spiteZeroHit = false
+			ppu.status.spriteZeroHit = false
 			ppu.status.spriteOverflow = false
 		}
 	}
