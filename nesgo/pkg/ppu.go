@@ -655,6 +655,33 @@ func (ppu *PPU) loadSprites() {
 	}
 }
 
+func colorOf(pattern uint32, offset uint) byte {
+	offset = 7 - offset
+	return byte((pattern >> (offset * 4)) & 0xF)
+}
+
+func (ppu *PPU) spritePixel(x uint) (*sprite, byte) {
+	if !ppu.mask.showSprites {
+		return nil, 0
+	}
+	// Return the first visible sprite pixel
+	for _, sprite := range ppu.sprites {
+		// Each sprite has 8 pixels on this row, each
+		// rendered in a different cycle
+		offset := x - uint(sprite.position)
+		if offset > 7 {
+			continue
+		}
+		color := colorOf(sprite.pattern, offset)
+		if color%4 == 0 {
+			// Not visible
+			continue
+		}
+		return &sprite, color
+	}
+	return nil, 0
+}
+
 func (ppu *PPU) maybeLoadSprites() {
 	if ppu.renderingEnabled() && ppu.Cycle == 257 {
 		// Do cycles 257-320 in one go
