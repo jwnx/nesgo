@@ -71,6 +71,7 @@ type cpuMemory struct {
 	rom        *PRG
 	ram        []byte
 	ppu        *PPURegisters
+	controller *Controller
 	cycles     *Cycles
 	stall      *Cycles
 }
@@ -83,6 +84,8 @@ func (mem *cpuMemory) Read(addr Address) byte {
 		return mem.ppu.Read(0x2000 + addr%8)
 	case addr == 0x4014:
 		return mem.ppu.Read(addr)
+	case addr == 0x4016:
+		return mem.controller.Read()
 	case addr < 0x8000:
 		return 0
 	case addr >= 0x8000:
@@ -103,6 +106,8 @@ func (mem *cpuMemory) Write(addr Address, value byte) {
 		mem.ppu.Write(mem, stall, 0x2000+addr%8, value)
 	case addr == 0x4014:
 		mem.ppu.Write(mem, stall, addr, value)
+	case addr == 0x4016:
+		mem.controller.Write(value)
 	case addr < 0x8000:
 	case addr >= 0x8000:
 		mem.rom.data[addr] = value
@@ -127,12 +132,13 @@ type CPU struct {
 }
 
 // NewCPU returns a new CPU instance
-func NewCPU(rom *PRG, ppu *PPURegisters) *CPU {
+func NewCPU(rom *PRG, ppu *PPURegisters, controller *Controller) *CPU {
 	cpu := CPU{interrupt: func() {}}
 	cpu.cpuMemory = cpuMemory{
 		rom:        rom,
 		ram:        make([]byte, 2048),
 		ppu:        ppu,
+		controller: controller,
 		cycles:     &cpu.Cycles,
 		stall:      &cpu.Stall,
 	}

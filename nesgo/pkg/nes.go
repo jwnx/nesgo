@@ -11,14 +11,17 @@ type Cycles = uint
 type NES struct {
 	CPU        *CPU
 	PPU        *PPU
+	Controller *Controller
 }
 
 // NewNES returns a virtual NES console
 func NewNES(cartridge *Cartridge) *NES {
+	controller := NewController()
 	ppu := NewPPU(cartridge.CHR, cartridge.Mode)
 	nes := NES{
-		CPU:        NewCPU(cartridge.PRG, &ppu.PPURegisters),
+		CPU:        NewCPU(cartridge.PRG, &ppu.PPURegisters, controller),
 		PPU:        ppu,
+		Controller: controller,
 	}
 	return &nes
 }
@@ -52,4 +55,3 @@ func (nes *NES) StepFrame() Cycles {
 func (nes *NES) Buffer() *image.RGBA {
 	return nes.PPU.Buffer()
 }
-
