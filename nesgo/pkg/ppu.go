@@ -3,6 +3,7 @@ package nesgo
 import (
 	"image"
 	"log"
+	"math/bits"
 )
 
 // Reference https://wiki.nesdev.com/w/index.php/Mirroring#Nametable_Mirroring
@@ -498,6 +499,8 @@ type PPU struct {
 
 	background uint64 // Background shift registers
 
+	sprites []sprite
+
 	// Double buffering
 	current *image.RGBA
 	next    *image.RGBA
@@ -569,6 +572,94 @@ func (ppu *PPU) tick(cpu *CPU) {
 		ppu.ScanLine++
 		if ppu.ScanLine > 261 {
 			ppu.advanceFrame()
+		}
+	}
+}
+
+func loadPattern(lowTileByte byte, highTileByte byte, attribute byte) uint32 {
+	var data uint32
+	for i := 0; i < 8; i++ {
+		pixel := (lowTileByte&0x80)>>7 | (highTileByte&0x80)>>6
+		lowTileByte <<= 1
+		highTileByte <<= 1
+		// Reference: http://www.nesmuseum.com/images/pputile.png
+		data = (data << 4) | uint32(attribute|pixel)
+	}
+	return data
+}
+
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_sprite_evaluation
+
+const spriteTableSize = 0x1000
+
+type sprite struct {
+	pattern  uint32
+	position byte
+	priority byte
+	index    byte
+}
+
+func (ppu *PPU) loadSpritePattern(s rawSprite, row int, h int) uint32 {
+	// h is 8 or 16
+	if s.shouldFlipVertically() {
+		row = (h - 1) - row
+	}
+	var addr Address
+	var table, tile byte
+	if h == 8 {
+		// For 8x8 sprites, the tile number of the sprite within
+		// the pattern table is selected in bit 3 of PPUCTRL.
+		table = ppu.ctrl.spriteTable
+		tile = s.tile
+	} else {
+		// For 8x16 sprites, the PPU ignores the pattern table selection,
+		// instead selecting a pattern table from bit 0 of the title number.
+		table = s.tile & 1
+		tile = s.tile & 0xFE
+		if row > 7 {
+			tile++
+			row -= 8
+		}
+	}
+	// Reference: https://wiki.nesdev.com/w/index.php/PPU_pattern_tables
+	addr = Address(spriteTableSize*uint16(table) + uint16(tile)*16 + uint16(row))
+	lowTileByte := ppu.ppuMemory.Read(addr)
+	highTileByte := ppu.ppuMemory.Read(addr + 8)
+	if s.shouldFlipHorizontally() {
+		lowTileByte = bits.Reverse8(lowTileByte)
+		highTileByte = bits.Reverse8(highTileByte)
+	}
+	return loadPattern(lowTileByte, highTileByte, s.pallete()<<2)
+}
+
+func (ppu *PPU) loadSprites() {
+	ppu.sprites = make([]sprite, 0)
+	h := int(ppu.ctrl.spriteHeight())
+	for i := uint(0); i < 64; i++ {
+		s := newRawSprite(&ppu.PPURegisters, i)
+		// Check if the sprite has a pixel on this line
+		row := int(ppu.ScanLine) - int(s.y)
+		if row < 0 || row >= h {
+			continue
+		}
+		if len(ppu.sprites) == 8 {
+			ppu.status.spriteOverflow = true
+			break
+		}
+		ppu.sprites = append(ppu.sprites, sprite{
+			pattern:  ppu.loadSpritePattern(s, row, h),
+			position: s.x, // The scan line determines "y"
+			priority: s.priority(),
+			index:    byte(i),
+		})
+	}
+}
+
+func (ppu *PPU) maybeLoadSprites() {
+	if ppu.renderingEnabled() && ppu.Cycle == 257 {
+		// Do cycles 257-320 in one go
+		if ppu.visibleLine() {
+			ppu.loadSprites()
 		}
 	}
 }
