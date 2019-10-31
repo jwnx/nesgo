@@ -664,3 +664,34 @@ func (ppu *PPU) maybeLoadSprites() {
 	}
 }
 
+// Reference: https://wiki.nesdev.com/w/index.php/PPU_rendering
+
+func (ppu *PPU) loadBackgroundPattern() uint32 {
+	// Reference: https://wiki.nesdev.com/w/index.php/PPU_scrolling#Tile_and_attribute_fetching
+	// Fetch index from nametable
+	index := ppu.ppuMemory.Read(Address(0x2000 | (ppu.v & 0x0FFF)))
+
+	// Fetch tile from pattern table
+	fineY := (ppu.v >> 12) & 7
+	table := ppu.ctrl.backgroundTable
+	addr := Address(0x1000*uint16(table) + uint16(index)*16 + fineY)
+	lowTileByte := ppu.ppuMemory.Read(addr)
+	highTileByte := ppu.ppuMemory.Read(addr + 8)
+
+	attributeAddr := 0x23C0 | (ppu.v & 0x0C00) | ((ppu.v >> 4) & 0x38) | ((ppu.v >> 2) & 0x07)
+	shift := ((ppu.v >> 4) & 4) | (ppu.v & 2)
+	attribute := ((ppu.ppuMemory.Read(Address(attributeAddr)) >> shift) & 3) << 2
+	return loadPattern(lowTileByte, highTileByte, byte(attribute))
+}
+
+func (ppu *PPU) maybeFetchTile() {
+	// Cycles are 1-256 and 321-336, 8 cycles per tile
+	if (ppu.preRenderLine() || ppu.visibleLine()) && ppu.fetchCycle() {
+		ppu.background <<= 4
+		if ppu.Cycle%8 == 0 {
+			ppu.background = ppu.background | uint64(ppu.loadBackgroundPattern())
+			ppu.incrementX()
+		}
+	}
+}
+
