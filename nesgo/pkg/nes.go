@@ -6,12 +6,15 @@ type Cycles = uint
 // NES represents a virtual NES console, with mapper 0
 type NES struct {
 	CPU        *CPU
+	PPU        *PPU
 }
 
 // NewNES returns a virtual NES console
 func NewNES(cartridge *Cartridge) *NES {
+	ppu := NewPPU(cartridge.CHR, cartridge.Mode)
 	nes := NES{
-		CPU:        NewCPU(cartridge.PRG),
+		CPU:        NewCPU(cartridge.PRG, &ppu.PPURegisters),
+		PPU:        ppu,
 	}
 	return &nes
 }
