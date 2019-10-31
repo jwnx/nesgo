@@ -755,3 +755,41 @@ func (ppu *PPU) renderPixel() {
 	ppu.next.SetRGBA(int(x), int(y), c)
 }
 
+// Step advances the rendering process
+func (ppu *PPU) Step(cpu *CPU) {
+	ppu.tick(cpu)
+
+	if ppu.renderingEnabled() {
+		if ppu.visibleLine() && ppu.visibleCycle() {
+			ppu.renderPixel()
+		}
+		ppu.maybeFetchTile()
+		if ppu.preRenderLine() || ppu.visibleLine() {
+			if ppu.Cycle == 256 {
+				ppu.incrementY()
+			}
+			if ppu.Cycle == 257 {
+				ppu.copyX()
+			}
+		}
+		if ppu.preRenderLine() && ppu.Cycle >= 280 && ppu.Cycle <= 304 {
+			ppu.copyY()
+		}
+		ppu.maybeLoadSprites()
+	}
+
+	// vblank logic
+	if ppu.Cycle == 1 {
+		if ppu.ScanLine == 241 {
+			ppu.status.vblankStarted = true
+			if ppu.ctrl.generateNMI {
+				cpu.NMI()
+			}
+			ppu.current, ppu.next = ppu.next, ppu.current
+		} else if ppu.preRenderLine() {
+			ppu.status.vblankStarted = false
+			ppu.status.spiteZeroHit = false
+			ppu.status.spriteOverflow = false
+		}
+	}
+}
