@@ -1,5 +1,9 @@
 package nesgo
 
+import (
+	"image"
+)
+
 // Cycles that a step function took
 type Cycles = uint
 
@@ -27,5 +31,25 @@ func (nes *NES) Reset() {
 // Step advances the console by a CPU instruction
 func (nes *NES) Step() Cycles {
 	cpuCycles := nes.CPU.Step()
+	ppuCycles := cpuCycles * 3
+	for i := Cycles(0); i < ppuCycles; i++ {
+		nes.PPU.Step(nes.CPU)
+	}
 	return cpuCycles
 }
+
+// StepFrame advances the console to the next frame
+func (nes *NES) StepFrame() Cycles {
+	cpuCycles := Cycles(0)
+	frame := nes.PPU.Frame
+	for frame == nes.PPU.Frame {
+		cpuCycles += nes.Step()
+	}
+	return cpuCycles
+}
+
+// Buffer returns the current buffer with the rendered frame
+func (nes *NES) Buffer() *image.RGBA {
+	return nes.PPU.Buffer()
+}
+
