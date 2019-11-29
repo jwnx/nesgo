@@ -11,6 +11,7 @@ import (
 
 	"github.com/leaanthony/mewn"
 	"github.com/wailsapp/wails"
+	"github.com/gordonklaus/portaudio"
 
 	nesgo "nesgo/pkg"
 )
@@ -52,7 +53,15 @@ func (g *GUI) Start() error {
 	if err != nil {
 		return err
 	}
-	g.nes = nesgo.NewNES(cartridge)
+
+	portaudio.Initialize()
+	//defer portaudio.Terminate()
+
+	audio := nesgo.NewAudio()
+	audio.Start()
+	//defer audio.Stop()
+
+	g.nes = nesgo.NewNES(cartridge, audio)
 	go func() {
 		clk := nesgo.Clock{}
 		for {

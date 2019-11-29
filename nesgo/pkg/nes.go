@@ -11,16 +11,19 @@ type Cycles = uint
 type NES struct {
 	CPU        *CPU
 	PPU        *PPU
+	APU        *APU
 	Controller *Controller
 }
 
 // NewNES returns a virtual NES console
-func NewNES(cartridge *Cartridge) *NES {
+func NewNES(cartridge *Cartridge, audio *Audio) *NES {
 	controller := NewController()
 	ppu := NewPPU(cartridge.CHR, cartridge.Mode)
+	apu := NewAPU(audio)
 	nes := NES{
-		CPU:        NewCPU(cartridge.PRG, &ppu.PPURegisters, controller),
+		CPU:        NewCPU(cartridge.PRG, &ppu.PPURegisters, &apu.APURegisters, controller),
 		PPU:        ppu,
+		APU:        apu,
 		Controller: controller,
 	}
 	return &nes
@@ -37,6 +40,9 @@ func (nes *NES) Step() Cycles {
 	ppuCycles := cpuCycles * 3
 	for i := Cycles(0); i < ppuCycles; i++ {
 		nes.PPU.Step(nes.CPU)
+	}
+	for i := Cycles(0); i < cpuCycles; i++ {
+		nes.APU.Step()
 	}
 	return cpuCycles
 }
